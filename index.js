@@ -8,6 +8,7 @@ import {
 } from "@modelcontextprotocol/sdk/types.js";
 import { spawn } from "child_process";
 import path from "path";
+import fs from "fs";
 
 class FluffOSMCPServer {
   constructor() {
@@ -26,6 +27,7 @@ class FluffOSMCPServer {
     this.binDir = process.env.FLUFFOS_BIN_DIR;
     this.configFile = process.env.MUD_RUNTIME_CONFIG_FILE;
     this.docsDir = process.env.FLUFFOS_DOCS_DIR;
+    this.mudlibDir = null;
 
     if (!this.binDir) {
       console.error("Error: FLUFFOS_BIN_DIR environment variable not set");
@@ -37,8 +39,12 @@ class FluffOSMCPServer {
       process.exit(1);
     }
 
+    // Parse mudlib directory from config file
+    this.mudlibDir = this.parseMudlibDir();
+
     console.error(`FluffOS bin directory: ${this.binDir}`);
     console.error(`FluffOS config file: ${this.configFile}`);
+    console.error(`Mudlib directory: ${this.mudlibDir || "(not found in config)"}`);
     
     if (this.docsDir) {
       console.error(`FluffOS docs directory: ${this.docsDir}`);
@@ -49,13 +55,37 @@ class FluffOSMCPServer {
     this.setupHandlers();
   }
 
+  parseMudlibDir() {
+    try {
+      const configContent = fs.readFileSync(this.configFile, "utf8");
+      const match = configContent.match(/^mudlib directory\s*:\s*(.+)$/m);
+      if (match) {
+        return match[1].trim();
+      }
+    } catch (err) {
+      console.error(`Warning: Could not parse mudlib directory from config: ${err.message}`);
+    }
+    return null;
+  }
+
+  normalizePath(lpcFile) {
+    // If we have a mudlib directory and the file path is absolute and starts with mudlib dir,
+    // convert it to a relative path
+    if (this.mudlibDir && path.isAbsolute(lpcFile) && lpcFile.startsWith(this.mudlibDir)) {
+      // Remove mudlib directory prefix and leading slash
+      return lpcFile.substring(this.mudlibDir.length).replace(/^\/+/, "");
+    }
+    // Otherwise return as-is (already relative or not under mudlib)
+    return lpcFile;
+  }
+
   setupHandlers() {
     this.server.setRequestHandler(ListToolsRequestSchema, async () => ({
       tools: [
         {
           name: "fluffos_validate",
           description:
-            "Validate an LPC file using the FluffOS driver's symbol tool. Returns success/failure and any compilation errors.",
+            "Validate an LPC file using the FluffOS driver's symbol tool. NOTE: This tool currently has a known bug (see FluffOS PR #1143) and may report false failures. For reliable compilation checking, use fluffos_disassemble instead.",
           inputSchema: {
             type: "object",
             properties: {
@@ -70,7 +100,7 @@ class FluffOSMCPServer {
         {
           name: "fluffos_disassemble",
           description:
-            "Disassemble an LPC file to show compiled bytecode using lpcc. Useful for debugging and understanding how code compiles.",
+            "Disassemble an LPC file to show compiled bytecode using lpcc. This also serves as a reliable compilation check - if it succeeds (exit code 0), the file compiles correctly. Returns bytecode, function tables, and disassembly. Useful for debugging, understanding how code compiles, and verifying compilation success.",
           inputSchema: {
             type: "object",
             properties: {
@@ -163,8 +193,9 @@ class FluffOSMCPServer {
 
   async runSymbol(lpcFile) {
     return new Promise((resolve, reject) => {
+      const normalizedPath = this.normalizePath(lpcFile);
       const symbolPath = path.join(this.binDir, "symbol");
-      const proc = spawn(symbolPath, [this.configFile, lpcFile], {
+      const proc = spawn(symbolPath, [this.configFile, normalizedPath], {
         cwd: path.dirname(this.configFile),
       });
 
@@ -197,8 +228,9 @@ class FluffOSMCPServer {
 
   async runLpcc(lpcFile) {
     return new Promise((resolve, reject) => {
+      const normalizedPath = this.normalizePath(lpcFile);
       const lpccPath = path.join(this.binDir, "lpcc");
-      const proc = spawn(lpccPath, [this.configFile, lpcFile], {
+      const proc = spawn(lpccPath, [this.configFile, normalizedPath], {
         cwd: path.dirname(this.configFile),
       });
 
