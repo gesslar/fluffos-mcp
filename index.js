@@ -85,7 +85,7 @@ class FluffOSMCPServer {
         {
           name: "fluffos_validate",
           description:
-            "Validate an LPC file using the FluffOS driver's symbol tool. NOTE: This tool currently has a known bug (see FluffOS PR #1143) and may report false failures. For reliable compilation checking, use fluffos_disassemble instead.",
+            "Validate an LPC file using the FluffOS driver's symbol tool. Compiles the file and reports success or failure with any compilation errors. Fast and lightweight check for code validity.",
           inputSchema: {
             type: "object",
             properties: {
@@ -100,7 +100,7 @@ class FluffOSMCPServer {
         {
           name: "fluffos_disassemble",
           description:
-            "Disassemble an LPC file to show compiled bytecode using lpcc. This also serves as a reliable compilation check - if it succeeds (exit code 0), the file compiles correctly. Returns bytecode, function tables, and disassembly. Useful for debugging, understanding how code compiles, and verifying compilation success.",
+            "Disassemble an LPC file to show compiled bytecode using lpcc. Returns detailed bytecode, function tables, strings, and disassembly. Useful for debugging and understanding how code compiles.",
           inputSchema: {
             type: "object",
             properties: {
