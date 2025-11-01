@@ -24,7 +24,8 @@ class FluffOSMCPServer {
     );
 
     this.binDir = process.env.FLUFFOS_BIN_DIR;
-    this.configFile = process.env.MUD_RUNTIME_CONFIG;
+    this.configFile = process.env.MUD_RUNTIME_CONFIG_FILE;
+    this.docsDir = process.env.FLUFFOS_DOCS_DIR;
 
     if (!this.binDir) {
       console.error("Error: FLUFFOS_BIN_DIR environment variable not set");
@@ -32,12 +33,18 @@ class FluffOSMCPServer {
     }
 
     if (!this.configFile) {
-      console.error("Error: MUD_RUNTIME_CONFIG environment variable not set");
+      console.error("Error: MUD_RUNTIME_CONFIG_FILE environment variable not set");
       process.exit(1);
     }
 
     console.error(`FluffOS bin directory: ${this.binDir}`);
     console.error(`FluffOS config file: ${this.configFile}`);
+    
+    if (this.docsDir) {
+      console.error(`FluffOS docs directory: ${this.docsDir}`);
+    } else {
+      console.error(`FluffOS docs directory: not set (doc lookup disabled)`);
+    }
 
     this.setupHandlers();
   }
@@ -75,6 +82,21 @@ class FluffOSMCPServer {
             required: ["file"],
           },
         },
+        ...(this.docsDir ? [{
+          name: "fluffos_doc_lookup",
+          description:
+            "Search FluffOS documentation for information about efuns, applies, concepts, etc. Searches markdown documentation files.",
+          inputSchema: {
+            type: "object",
+            properties: {
+              query: {
+                type: "string",
+                description: "Term to search for in documentation (e.g., 'call_out', 'mapping', 'socket')",
+              },
+            },
+            required: ["query"],
+          },
+        }] : []),
       ],
     }));
 
@@ -97,6 +119,21 @@ class FluffOSMCPServer {
 
           case "fluffos_disassemble": {
             const result = await this.runLpcc(args.file);
+            return {
+              content: [
+                {
+                  type: "text",
+                  text: result,
+                },
+              ],
+            };
+          }
+
+          case "fluffos_doc_lookup": {
+            if (!this.docsDir) {
+              throw new Error("Documentation lookup is not available (FLUFFOS_DOCS_DIR not set)");
+            }
+            const result = await this.searchDocs(args.query);
             return {
               content: [
                 {
@@ -188,6 +225,40 @@ class FluffOSMCPServer {
 
       proc.on("error", (err) => {
         reject(new Error(`Failed to run lpcc: ${err.message}`));
+      });
+    });
+  }
+
+  async searchDocs(query) {
+    return new Promise((resolve, reject) => {
+      const scriptPath = path.join(path.dirname(new URL(import.meta.url).pathname), "scripts", "search_docs.sh");
+      const proc = spawn(scriptPath, [this.docsDir, query]);
+
+      let stdout = "";
+      let stderr = "";
+
+      proc.stdout.on("data", (data) => {
+        stdout += data.toString();
+      });
+
+      proc.stderr.on("data", (data) => {
+        stderr += data.toString();
+      });
+
+      proc.on("close", (code) => {
+        if (code === 0) {
+          if (stdout.trim()) {
+            resolve(`Found documentation for "${query}":\n\n${stdout}`);
+          } else {
+            resolve(`No documentation found for "${query}".`);
+          }
+        } else {
+          resolve(`Error searching documentation:\n${stderr || stdout}`);
+        }
+      });
+
+      proc.on("error", (err) => {
+        reject(new Error(`Failed to search docs: ${err.message}`));
       });
     });
   }
