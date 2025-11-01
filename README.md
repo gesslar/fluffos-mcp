@@ -17,6 +17,7 @@ This MCP server exposes FluffOS's powerful CLI utilities (`symbol` and `lpcc`) t
 
 - 🔍 **`fluffos_validate`**: Validate an LPC file using FluffOS's `symbol` tool
 - 🔬 **`fluffos_disassemble`**: Disassemble LPC to bytecode using `lpcc`
+- 📚 **`fluffos_doc_lookup`**: Search FluffOS documentation for efuns, applies, concepts, etc.
 
 ## Prerequisites
 
@@ -44,10 +45,11 @@ npm install
 
 ## Configuration
 
-The server requires two environment variables:
+The server requires these environment variables:
 
 - `FLUFFOS_BIN_DIR` - Directory containing FluffOS binaries (`symbol`, `lpcc`)
-- `MUD_RUNTIME_CONFIG` - Path to your FluffOS config file (e.g., `/mud/lib/etc/config.test`)
+- `MUD_RUNTIME_CONFIG_FILE` - Path to your FluffOS config file (e.g., `/mud/lib/etc/config.test`)
+- `FLUFFOS_DOCS_DIR` - (Optional) Directory containing FluffOS documentation for doc lookup
 
 ## Setup for Different AI Tools
 
@@ -64,7 +66,8 @@ Add to your Warp MCP configuration:
     "args": ["/absolute/path/to/fluffos-mcp/index.js"],
     "env": {
       "FLUFFOS_BIN_DIR": "/path/to/fluffos/bin",
-      "MUD_RUNTIME_CONFIG": "/mud/lib/etc/config.test"
+      "MUD_RUNTIME_CONFIG_FILE": "/mud/lib/etc/config.test",
+      "FLUFFOS_DOCS_DIR": "/path/to/fluffos/docs"
     }
   }
 }
@@ -86,7 +89,7 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
       "args": ["/absolute/path/to/fluffos-mcp/index.js"],
       "env": {
         "FLUFFOS_BIN_DIR": "/path/to/fluffos/bin",
-        "MUD_RUNTIME_CONFIG": "/mud/lib/etc/config.test"
+        "MUD_RUNTIME_CONFIG_FILE": "/mud/lib/etc/config.test"
       }
     }
   }
@@ -107,6 +110,12 @@ Once configured, you can ask your AI assistant:
 
 **"Why is this code slow?"**
 → AI examines the disassembly to identify inefficient patterns
+
+**"What's the syntax for call_out?"**
+→ AI uses `fluffos_doc_lookup` to search documentation
+
+**"How do I use mappings?"**
+→ AI searches docs for mapping-related documentation
 
 ## How It Works
 
