@@ -1,0 +1,29 @@
+{
+  "name": "fluffos-mcp",
+  "version": "0.1.0",
+  "description": "MCP server for FluffOS driver tools - validate and disassemble LPC code",
+  "main": "index.js",
+  "type": "module",
+  "bin": {
+    "fluffos-mcp": "./index.js"
+  },
+  "scripts": {
+    "start": "node index.js"
+  },
+  "keywords": [
+    "fluffos",
+    "lpc",
+    "mud",
+    "mcp",
+    "model-context-protocol"
+  ],
+  "author": "Gesslar",
+  "license": "Unlicense",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/gesslar/fluffos-mcp.git"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.20.2"
+  }
+}
