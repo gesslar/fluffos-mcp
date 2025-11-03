@@ -256,6 +256,6 @@ PRs welcome! This is a simple wrapper that can be extended with more FluffOS too
 - **FluffOS Team** - For the amazing driver and CLI tools
 - [Model Context Protocol](https://modelcontextprotocol.io/) - Making this integration possible
 
-## License
+## ~~License~~
 
 Unlicense - Public Domain. Do whatever you want with this code.
