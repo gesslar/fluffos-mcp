@@ -27,7 +27,6 @@ class FluffOSMCPServer {
     this.binDir = process.env.FLUFFOS_BIN_DIR;
     this.configFile = process.env.MUD_RUNTIME_CONFIG_FILE;
     this.docsDir = process.env.FLUFFOS_DOCS_DIR;
-    this.mudlibDir = null;
 
     if (!this.binDir) {
       console.error("Error: FLUFFOS_BIN_DIR environment variable not set");
