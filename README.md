@@ -253,8 +253,8 @@ PRs welcome! This is a simple wrapper that can be extended with more FluffOS too
 
 ## Credits
 
-- **FluffOS Team** - For the amazing driver and CLI tools
-- [Model Context Protocol](https://modelcontextprotocol.io/) - Making this integration possible
+- [**FluffOS Team**](<https://github.com/fluffos/fluffos>) - For the amazing driver and CLI tools
+- [**Model Context Protocol**](<https://modelcontextprotocol.io/>) - Making this integration possible
 
 ## ~~License~~
 
