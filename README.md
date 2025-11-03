@@ -6,18 +6,18 @@ This MCP server exposes FluffOS's powerful CLI utilities (`symbol` and `lpcc`) t
 
 ## What This Enables
 
-✨ **AI assistants can now:**
+**AI assistants can now:**
 
 - Validate LPC files using the actual FluffOS driver (not just syntax checking)
-- Catch runtime compilation issues that static analysis misses  
+- Catch runtime compilation issues that static analysis misses
 - Examine compiled bytecode to debug performance or behavior issues
 - Understand how LPC code actually compiles
 
 ## Tools
 
-- 🔍 **`fluffos_validate`**: Validate an LPC file using FluffOS's `symbol` tool
-- 🔬 **`fluffos_disassemble`**: Disassemble LPC to bytecode using `lpcc`
-- 📚 **`fluffos_doc_lookup`**: Search FluffOS documentation for efuns, applies, concepts, etc.
+- **`fluffos_validate`**: Validate an LPC file using FluffOS's `symbol` tool
+- **`fluffos_disassemble`**: Disassemble LPC to bytecode using `lpcc`
+- **`fluffos_doc_lookup`**: Search FluffOS documentation for efuns, applies, concepts, etc.
 
 ## Prerequisites
 
@@ -119,7 +119,7 @@ Once configured, you can ask your AI assistant:
 
 ## How It Works
 
-```
+```text
 AI Assistant
     ↓ (natural language)
   MCP Protocol
@@ -135,7 +135,56 @@ AI Assistant
 2. Server spawns appropriate FluffOS CLI tool
 3. CLI tool validates/disassembles using the driver
 4. Server returns results to AI
-5. AI understands your code at the driver level!
+5. AI understands your code at the driver level and can reference FluffOS documentation to explain how functions work!
+
+## Implementation Details
+
+### Architecture
+
+The server is built using the [Model Context Protocol SDK](https://github.com/modelcontextprotocol/sdk) and follows a class-based architecture:
+
+- **FluffOSMCPServer class**: Main server implementation
+- **MCP SDK Server**: Handles protocol communication via stdio
+- **Child process spawning**: Executes FluffOS CLI tools
+- **Path normalization**: Converts absolute paths to mudlib-relative paths
+
+### Path Handling
+
+The server intelligently handles file paths:
+
+1. Parses `mudlib directory` from your FluffOS config file
+2. Normalizes absolute paths to mudlib-relative paths
+3. Passes normalized paths to FluffOS tools (which expect relative paths)
+
+Example: `/mud/ox/lib/std/object.c` → `std/object.c`
+
+### Tool Implementation
+
+**`fluffos_validate`**:
+
+- Spawns `symbol <config> <file>` from the config directory
+- Captures stdout/stderr
+- Returns success/failure with compilation errors
+- Exit code 0 = validation passed
+
+**`fluffos_disassemble`**:
+
+- Spawns `lpcc <config> <file>` from the config directory
+- Returns complete bytecode disassembly
+- Includes function tables, strings, and instruction-level detail
+
+**`fluffos_doc_lookup`** (optional):
+
+- Runs `scripts/search_docs.sh` helper script
+- Uses `grep` to search markdown files
+- Only available if `FLUFFOS_DOCS_DIR` is set
+
+### Error Handling
+
+- Validates required environment variables on startup
+- Returns structured error responses via MCP
+- Gracefully handles missing config or tool execution failures
+- Non-zero exit codes are reported but don't crash the server
 
 ## Complementary Tools
 

@@ -1,14 +1,22 @@
 {
-  "name": "fluffos-mcp",
+  "name": "@gesslar/fluffos-mcp",
   "version": "0.1.0",
   "description": "MCP server for FluffOS driver tools - validate and disassemble LPC code",
-  "main": "index.js",
+  "main": "src/index.js",
   "type": "module",
   "bin": {
-    "fluffos-mcp": "./index.js"
+    "fluffos-mcp": "./src/index.js"
   },
   "scripts": {
-    "start": "node index.js"
+    "start": "node src/index.js",
+    "lint": "eslint src/",
+    "lint:fix": "eslint src/ --fix",
+    "submit": "npm publish --access public",
+    "update": "npx npm-check-updates -u && npm install",
+    "pr": "gt submit --publish --restack --ai -m",
+    "patch": "npm version patch",
+    "minor": "npm version minor",
+    "major": "npm version major"
   },
   "keywords": [
     "fluffos",
@@ -17,7 +25,7 @@
     "mcp",
     "model-context-protocol"
   ],
-  "author": "Gesslar",
+  "author": "gesslar",
   "license": "Unlicense",
   "repository": {
     "type": "git",
@@ -25,5 +33,11 @@
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.20.2"
+  },
+  "devDependencies": {
+    "@eslint/js": "^9.39.0",
+    "@stylistic/eslint-plugin": "^5.5.0",
+    "eslint-plugin-jsdoc": "^61.1.11",
+    "globals": "^16.5.0"
   }
 }
