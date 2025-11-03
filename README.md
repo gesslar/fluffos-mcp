@@ -2,6 +2,10 @@
 
 **Real driver validation for LPC development** - An MCP server that wraps FluffOS CLI tools to provide actual driver-level validation and debugging.
 
+<a href="https://glama.ai/mcp/servers/@gesslar/fluffos-mcp">
+  <img width="380" height="200" src="https://glama.ai/mcp/servers/@gesslar/fluffos-mcp/badge" alt="FluffOS Server MCP server" />
+</a>
+
 This MCP server exposes FluffOS's powerful CLI utilities (`symbol` and `lpcc`) to AI assistants, enabling them to validate LPC code against the actual driver and examine compiled bytecode.
 
 ## What This Enables
