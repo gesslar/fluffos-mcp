@@ -1,6 +1,6 @@
 {
   "name": "@gesslar/fluffos-mcp",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "MCP server for FluffOS driver tools - validate and disassemble LPC code",
   "main": "src/index.js",
   "type": "module",
