@@ -36,10 +36,19 @@ Node.js 16+ required:
 node --version  # Should be v16.0.0 or higher
 ```
 
-### 3. Install Dependencies
+## Installation
+
+You can install the server via npm:
 
 ```bash
-cd /path/to/fluffos-mcp
+npm install -g @gesslar/fluffos-mcp
+```
+
+Or clone and install locally:
+
+```bash
+git clone https://github.com/gesslar/fluffos-mcp.git
+cd fluffos-mcp
 npm install
 ```
 
@@ -58,6 +67,24 @@ The server requires these environment variables:
 Add to your Warp MCP configuration:
 
 **Location**: Settings → AI → Model Context Protocol
+
+**If installed via npm:**
+
+```json
+{
+  "fluffos": {
+    "command": "npx",
+    "args": ["@gesslar/fluffos-mcp"],
+    "env": {
+      "FLUFFOS_BIN_DIR": "/path/to/fluffos/bin",
+      "MUD_RUNTIME_CONFIG_FILE": "/mud/lib/etc/config.test",
+      "FLUFFOS_DOCS_DIR": "/path/to/fluffos/docs"
+    }
+  }
+}
+```
+
+**If cloned locally:**
 
 ```json
 {
@@ -81,6 +108,26 @@ Restart Warp after adding the configuration.
 
 Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS) or equivalent:
 
+**If installed via npm:**
+
+```json
+{
+  "mcpServers": {
+    "fluffos": {
+      "command": "npx",
+      "args": ["@gesslar/fluffos-mcp"],
+      "env": {
+        "FLUFFOS_BIN_DIR": "/path/to/fluffos/bin",
+        "MUD_RUNTIME_CONFIG_FILE": "/mud/lib/etc/config.test",
+        "FLUFFOS_DOCS_DIR": "/path/to/fluffos/docs"
+      }
+    }
+  }
+}
+```
+
+**If cloned locally:**
+
 ```json
 {
   "mcpServers": {
@@ -89,7 +136,8 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
       "args": ["/absolute/path/to/fluffos-mcp/index.js"],
       "env": {
         "FLUFFOS_BIN_DIR": "/path/to/fluffos/bin",
-        "MUD_RUNTIME_CONFIG_FILE": "/mud/lib/etc/config.test"
+        "MUD_RUNTIME_CONFIG_FILE": "/mud/lib/etc/config.test",
+        "FLUFFOS_DOCS_DIR": "/path/to/fluffos/docs"
       }
     }
   }
