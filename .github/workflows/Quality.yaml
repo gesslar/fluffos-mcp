@@ -11,6 +11,8 @@ on:
 
 jobs:
   Quality:
+    permissions:
+      contents: read
     uses: gesslar/Maint/.github/workflows/Quality.yaml@main
     secrets: inherit
     with:
