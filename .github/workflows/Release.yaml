@@ -1,0 +1,16 @@
+name: Release
+
+on:
+  pull_request:
+    types: [closed]
+    branches: [main]
+
+jobs:
+  Release:
+    uses: gesslar/Maint/.github/workflows/Release.yaml@main
+    secrets: inherit
+    with:
+      package_manager: "auto"
+      quality_check: "Quality"
+    permissions:
+      contents: write
