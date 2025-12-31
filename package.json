@@ -24,6 +24,9 @@
     "cheddar"
   ],
   "packageManager": "pnpm@10.26.2",
+  "engines": {
+    "node": ">=22"
+  },
   "main": "src/index.js",
   "type": "module",
   "bin": {
@@ -33,12 +36,12 @@
     "start": "node src/index.js",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "submit": "npm publish --access public",
-    "update": "npx npm-check-updates -u && npm install",
+    "submit": "pnpm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
+    "update": "pnpm up --latest --recursive",
     "pr": "gt submit -p --ai",
-    "patch": "npm version patch",
-    "minor": "npm version minor",
-    "major": "npm version major"
+    "patch": "pnpm version patch",
+    "minor": "pnpm version minor",
+    "major": "pnpm version major"
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.25.1"
