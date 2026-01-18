@@ -8,13 +8,19 @@ importers:
 
   .:
     dependencies:
+      '@gesslar/toolkit':
+        specifier: ^3.23.0
+        version: 3.23.0(eslint@9.39.2)
       '@modelcontextprotocol/sdk':
-        specifier: ^1.25.1
-        version: 1.25.2(hono@4.11.3)(zod@4.3.2)
+        specifier: ^1.25.2
+        version: 1.25.2(hono@4.11.3)(zod@4.3.5)
+      zod:
+        specifier: ^4.3.5
+        version: 4.3.5
     devDependencies:
       '@gesslar/uglier':
-        specifier: ^1.0.0
-        version: 1.0.0(eslint@9.39.2)
+        specifier: ^1.1.0
+        version: 1.1.0(eslint@9.39.2)
       eslint:
         specifier: ^9.39.2
         version: 9.39.2
@@ -77,19 +83,19 @@ packages:
     engines: {node: '>=22'}
     hasBin: true
 
-  '@gesslar/toolkit@3.22.2':
-    resolution: {integrity: sha512-2xbI4+urh8vLTz2ks+Nc/Nfgynp8W+faPVaKMpUWJ2N3flYyEnhcKHR5IHy/p2mP0bbD7aWCmgQ/MgAobnoIyw==}
+  '@gesslar/toolkit@3.23.0':
+    resolution: {integrity: sha512-Y7Ti8qBdJlLoraHGjgdgZkDTEMJH/WNkvWXiw9JCHWJ4n0oeO4HW5XiJBPFsMY1BiftzFNrYAH49DY6a5QLfWw==}
     engines: {node: '>=22'}
 
-  '@gesslar/uglier@1.0.0':
-    resolution: {integrity: sha512-jh+rsmSWQFGeoTlkgWQi/weo4wPbxCGGM0bs1i0BJz+4SUZbtSEOdqFl7r6COuNkTSng8lMP7LHzTf73bs3elg==}
+  '@gesslar/uglier@1.1.0':
+    resolution: {integrity: sha512-4wEJy8RsHzQ5pCNjigkvD84XRVasQXyJXQVKNH8sVCnpp8On9DGPe7D/6mgDZzXyOlUkZdGOH1pB4x1RuEAfwQ==}
     engines: {node: '>=22'}
     hasBin: true
     peerDependencies:
       eslint: ^9.0.0
 
-  '@hono/node-server@1.19.7':
-    resolution: {integrity: sha512-vUcD0uauS7EU2caukW8z5lJKtoGMokxNbJtBiwHgpqxEXokaHCBkQUmCHhjFB1VUTWdqj25QoMkMKzgjq+uhrw==}
+  '@hono/node-server@1.19.9':
+    resolution: {integrity: sha512-vHL6w3ecZsky+8P5MD+eFfaGTyCeOHUIFYMGpQGbrBTSmNNoxv0if69rEZ5giu36weC5saFuznL411gRX7bJDw==}
     engines: {node: '>=18.14.1'}
     peerDependencies:
       hono: ^4
@@ -140,8 +146,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@typescript-eslint/types@8.52.0':
-    resolution: {integrity: sha512-LWQV1V4q9V4cT4H5JCIx3481iIFxH1UkVk+ZkGGAV1ZGcjGI9IoFOfg3O6ywz8QqCDEp7Inlg6kovMofsNRaGg==}
+  '@typescript-eslint/types@8.53.0':
+    resolution: {integrity: sha512-Bmh9KX31Vlxa13+PqPvt4RzKRN1XORYSLlAE+sO1i28NkisGbTtSLFVB3l7PWdHtR3E0mVMuC7JilWJ99m2HxQ==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   accepts@2.0.0:
@@ -464,8 +470,8 @@ packages:
     resolution: {integrity: sha512-4FbRdAX+bSdmo4AUFuS0WNiPz8NgFt+r8ThgNWmlrjQjt1Q7ZR9+zTlce2859x4KSXrwIsaeTqDoKQmtP8pLmQ==}
     engines: {node: '>= 0.8'}
 
-  iconv-lite@0.7.1:
-    resolution: {integrity: sha512-2Tth85cXwGFHfvRgZWszZSvdo+0Xsqmw8k8ZwxScfcBneNUraK+dxRxRm24nszx80Y0TVio8kKLt5sLE7ZCLlw==}
+  iconv-lite@0.7.2:
+    resolution: {integrity: sha512-im9DjEDQ55s9fL4EYzOAv0yMqmMBSZp6G0VvFyTMPKWxiSBHUj9NW/qqLmXUwXrrM7AvqSlTCfvqRb0cM8yYqw==}
     engines: {node: '>=0.10.0'}
 
   ignore@5.3.2:
@@ -762,6 +768,10 @@ packages:
     resolution: {integrity: sha512-OZs6gsjF4vMp32qrCbiVSkrFmXtG/AZhY3t0iAMrMBiAZyV9oALtXO8hsrHbMXF9x6L3grlFuwW2oAz7cav+Gw==}
     engines: {node: '>= 0.6'}
 
+  types@0.1.1:
+    resolution: {integrity: sha512-JuntZtJj4MKLE9x/XBs7IjsznYhzETwr34pw3XJTKvgYtAMdeMG+o8x8U85E5Lm6eCPa1DdOdGVsHMwq4ZnZAg==}
+    engines: {node: '>= 0.6.0'}
+
   unpipe@1.0.0:
     resolution: {integrity: sha512-pjy2bYhSsufwWlKwPc+l3cN7+wuJlK6uz0YdJEOlQDbl6jo/YlPi4mb8agUkVC8BF7V8NuzeyPNqRksA3hztKQ==}
     engines: {node: '>= 0.8'}
@@ -799,15 +809,15 @@ packages:
     peerDependencies:
       zod: ^3.25 || ^4
 
-  zod@4.3.2:
-    resolution: {integrity: sha512-b8L8yn4rIVfiXyHAmnr52/ZEpDumlT0bmxiq3Ws1ybrinhflGpt12Hvv54kYnEsGPRs6o/Ka3/ppA2OWY21IVg==}
+  zod@4.3.5:
+    resolution: {integrity: sha512-k7Nwx6vuWx1IJ9Bjuf4Zt1PEllcwe7cls3VNzm4CQ1/hgtFUK2bRNG3rvnpPUhFjmqJKAKtjV576KnUkHocg/g==}
 
 snapshots:
 
   '@es-joy/jsdoccomment@0.78.0':
     dependencies:
       '@types/estree': 1.0.8
-      '@typescript-eslint/types': 8.52.0
+      '@typescript-eslint/types': 8.53.0
       comment-parser: 1.4.1
       esquery: 1.7.0
       jsdoc-type-pratt-parser: 7.0.0
@@ -864,17 +874,23 @@ snapshots:
 
   '@gesslar/colours@0.8.0': {}
 
-  '@gesslar/toolkit@3.22.2':
+  '@gesslar/toolkit@3.23.0(eslint@9.39.2)':
     dependencies:
+      '@eslint/js': 9.39.2
       '@gesslar/colours': 0.8.0
+      '@stylistic/eslint-plugin': 5.7.0(eslint@9.39.2)
       ajv: 8.17.1
+      globals: 17.0.0
       json5: 2.2.3
+      types: 0.1.1
       yaml: 2.8.2
+    transitivePeerDependencies:
+      - eslint
 
-  '@gesslar/uglier@1.0.0(eslint@9.39.2)':
+  '@gesslar/uglier@1.1.0(eslint@9.39.2)':
     dependencies:
       '@gesslar/colours': 0.7.1
-      '@gesslar/toolkit': 3.22.2
+      '@gesslar/toolkit': 3.23.0(eslint@9.39.2)
       '@skarab/detect-package-manager': 1.0.0
       '@stylistic/eslint-plugin': 5.7.0(eslint@9.39.2)
       eslint: 9.39.2
@@ -883,7 +899,7 @@ snapshots:
     transitivePeerDependencies:
       - supports-color
 
-  '@hono/node-server@1.19.7(hono@4.11.3)':
+  '@hono/node-server@1.19.9(hono@4.11.3)':
     dependencies:
       hono: 4.11.3
 
@@ -898,9 +914,9 @@ snapshots:
 
   '@humanwhocodes/retry@0.4.3': {}
 
-  '@modelcontextprotocol/sdk@1.25.2(hono@4.11.3)(zod@4.3.2)':
+  '@modelcontextprotocol/sdk@1.25.2(hono@4.11.3)(zod@4.3.5)':
     dependencies:
-      '@hono/node-server': 1.19.7(hono@4.11.3)
+      '@hono/node-server': 1.19.9(hono@4.11.3)
       ajv: 8.17.1
       ajv-formats: 3.0.1(ajv@8.17.1)
       content-type: 1.0.5
@@ -914,8 +930,8 @@ snapshots:
       json-schema-typed: 8.0.2
       pkce-challenge: 5.0.1
       raw-body: 3.0.2
-      zod: 4.3.2
-      zod-to-json-schema: 3.25.1(zod@4.3.2)
+      zod: 4.3.5
+      zod-to-json-schema: 3.25.1(zod@4.3.5)
     transitivePeerDependencies:
       - hono
       - supports-color
@@ -927,7 +943,7 @@ snapshots:
   '@stylistic/eslint-plugin@5.7.0(eslint@9.39.2)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.2)
-      '@typescript-eslint/types': 8.52.0
+      '@typescript-eslint/types': 8.53.0
       eslint: 9.39.2
       eslint-visitor-keys: 5.0.0
       espree: 11.0.0
@@ -938,7 +954,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@typescript-eslint/types@8.52.0': {}
+  '@typescript-eslint/types@8.53.0': {}
 
   accepts@2.0.0:
     dependencies:
@@ -985,7 +1001,7 @@ snapshots:
       content-type: 1.0.5
       debug: 4.4.3
       http-errors: 2.0.1
-      iconv-lite: 0.7.1
+      iconv-lite: 0.7.2
       on-finished: 2.4.1
       qs: 6.14.1
       raw-body: 3.0.2
@@ -1304,7 +1320,7 @@ snapshots:
       statuses: 2.0.2
       toidentifier: 1.0.1
 
-  iconv-lite@0.7.1:
+  iconv-lite@0.7.2:
     dependencies:
       safer-buffer: 2.1.2
 
@@ -1460,7 +1476,7 @@ snapshots:
     dependencies:
       bytes: 3.1.2
       http-errors: 2.0.1
-      iconv-lite: 0.7.1
+      iconv-lite: 0.7.2
       unpipe: 1.0.0
 
   require-from-string@2.0.2: {}
@@ -1578,6 +1594,8 @@ snapshots:
       media-typer: 1.1.0
       mime-types: 3.0.2
 
+  types@0.1.1: {}
+
   unpipe@1.0.0: {}
 
   uri-js@4.4.1:
@@ -1598,8 +1616,8 @@ snapshots:
 
   yocto-queue@0.1.0: {}
 
-  zod-to-json-schema@3.25.1(zod@4.3.2):
+  zod-to-json-schema@3.25.1(zod@4.3.5):
     dependencies:
-      zod: 4.3.2
+      zod: 4.3.5
 
-  zod@4.3.2: {}
+  zod@4.3.5: {}

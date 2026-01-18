@@ -1,18 +1,14 @@
 #!/usr/bin/env node
 
-import {Server} from "@modelcontextprotocol/sdk/server/index.js"
+import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js"
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js"
-import {
-  CallToolRequestSchema,
-  ListToolsRequestSchema,
-} from "@modelcontextprotocol/sdk/types.js"
+import * as z from "zod/v4"
 import {spawn} from "child_process"
-import path from "path"
-import fs from "fs"
+import {FileObject, DirectoryObject} from "@gesslar/toolkit"
 
 class FluffOSMCPServer {
   constructor() {
-    this.server = new Server(
+    this.server = new McpServer(
       {
         name: "fluffos-mcp-server",
         version: "0.1.0",
@@ -28,7 +24,9 @@ class FluffOSMCPServer {
     this.configFile = process.env.MUD_RUNTIME_CONFIG_FILE
     this.docsDir = process.env.FLUFFOS_DOCS_DIR
     this.mudlibDir = null
+  }
 
+  async initialize() {
     if(!this.binDir) {
       console.error("Error: FLUFFOS_BIN_DIR environment variable not set")
       process.exit(1)
@@ -40,28 +38,29 @@ class FluffOSMCPServer {
     }
 
     // Parse mudlib directory from config file
-    this.mudlibDir = this.parseMudlibDir()
+    this.mudlibDir = await this.parseMudlibDir()
 
     console.error(`FluffOS bin directory: ${this.binDir}`)
     console.error(`FluffOS config file: ${this.configFile}`)
     console.error(`Mudlib directory: ${this.mudlibDir || "(not found in config)"}`)
 
-    if(this.docsDir) {
+    if(this.docsDir)
       console.error(`FluffOS docs directory: ${this.docsDir}`)
-    } else {
+    else
       console.error(`FluffOS docs directory: not set (doc lookup disabled)`)
-    }
 
-    this.setupHandlers()
+    this.setupTools()
   }
 
-  parseMudlibDir() {
+  async parseMudlibDir() {
     try {
-      const configContent = fs.readFileSync(this.configFile, "utf8")
+      const configFile = new FileObject(this.configFile)
+      const configContent = await configFile.read()
       const match = configContent.match(/^mudlib directory\s*:\s*(.+)$/m)
-      if(match) {
+
+      if(match)
         return match[1].trim()
-      }
+
     } catch(err) {
       console.error(`Warning: Could not parse mudlib directory from config: ${err.message}`)
     }
@@ -73,7 +72,7 @@ class FluffOSMCPServer {
     // If we have a mudlib directory and the file path is absolute and starts with mudlib dir,
     // convert it to a relative path
     if(this.mudlibDir &&
-      path.isAbsolute(lpcFile) &&
+      lpcFile.startsWith("/") &&
       lpcFile.startsWith(this.mudlibDir)
     ) {
       // Remove mudlib directory prefix and leading slash
@@ -84,109 +83,26 @@ class FluffOSMCPServer {
     return lpcFile
   }
 
-  setupHandlers() {
-    this.server.setRequestHandler(ListToolsRequestSchema, async() => ({
-      tools: [
-        {
-          name: "fluffos_validate",
-          description:
-            "Validate an LPC file using the FluffOS driver's symbol tool. " +
-            "Compiles the file and reports success or failure with any " +
-            "compilation errors. Fast and lightweight check for code validity.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              file: {
-                type: "string",
-                description: "Absolute path to the LPC file to validate",
-              },
-            },
-            required: ["file"],
-          },
-        },
-        {
-          name: "fluffos_disassemble",
-          description:
-            "Disassemble an LPC file to show compiled bytecode using lpcc. Returns detailed bytecode, function tables, strings, and disassembly. Useful for debugging and understanding how code compiles.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              file: {
-                type: "string",
-                description: "Absolute path to the LPC file to disassemble",
-              },
-            },
-            required: ["file"],
-          },
-        },
-        ...(this.docsDir ? [{
-          name: "fluffos_doc_lookup",
-          description:
-            "Search FluffOS documentation for information about efuns, applies, concepts, etc. Searches markdown documentation files.",
-          inputSchema: {
-            type: "object",
-            properties: {
-              query: {
-                type: "string",
-                description: "Term to search for in documentation (e.g., 'call_out', 'mapping', 'socket')",
-              },
-            },
-            required: ["query"],
-          },
-        }] : []),
-      ],
-    }))
-
-    this.server.setRequestHandler(CallToolRequestSchema, async request => {
-      const {name, arguments: args} = request.params
-
+  setupTools() {
+    // Register validate tool
+    this.server.registerTool("fluffos_validate", {
+      description: "Validate an LPC file using the FluffOS driver's symbol tool. " +
+        "Compiles the file and reports success or failure with any " +
+        "compilation errors. Fast and lightweight check for code validity.",
+      inputSchema: {
+        file: z.string().describe("Absolute path to the LPC file to validate"),
+      },
+    }, async({file}) => {
       try {
-        switch(name) {
-          case "fluffos_validate": {
-            const result = await this.runSymbol(args.file)
+        const result = await this.runSymbol(file)
 
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: result,
-                },
-              ],
-            }
-          }
-
-          case "fluffos_disassemble": {
-            const result = await this.runLpcc(args.file)
-
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: result,
-                },
-              ],
-            }
-          }
-
-          case "fluffos_doc_lookup": {
-            if(!this.docsDir) {
-              throw new Error("Documentation lookup is not available (FLUFFOS_DOCS_DIR not set)")
-            }
-
-            const result = await this.searchDocs(args.query)
-
-            return {
-              content: [
-                {
-                  type: "text",
-                  text: result,
-                },
-              ],
-            }
-          }
-
-          default:
-            throw new Error(`Unknown tool: ${name}`)
+        return {
+          content: [
+            {
+              type: "text",
+              text: result,
+            },
+          ],
         }
       } catch(error) {
         return {
@@ -200,14 +116,80 @@ class FluffOSMCPServer {
         }
       }
     })
+
+    // Register disassemble tool
+    this.server.registerTool("fluffos_disassemble", {
+      description: "Disassemble an LPC file to show compiled bytecode using lpcc. Returns detailed bytecode, function tables, strings, and disassembly. Useful for debugging and understanding how code compiles.",
+      inputSchema: {
+        file: z.string().describe("Absolute path to the LPC file to disassemble"),
+      },
+    }, async({file}) => {
+      try {
+        const result = await this.runLpcc(file)
+
+        return {
+          content: [
+            {
+              type: "text",
+              text: result,
+            },
+          ],
+        }
+      } catch(error) {
+        return {
+          content: [
+            {
+              type: "text",
+              text: `Error: ${error.message}`,
+            },
+          ],
+          isError: true,
+        }
+      }
+    })
+
+    // Register doc lookup tool (conditional)
+    if(this.docsDir) {
+      this.server.registerTool("fluffos_doc_lookup", {
+        description: "Search FluffOS documentation for information about efuns, applies, concepts, etc. Searches markdown documentation files.",
+        inputSchema: {
+          query: z.string().describe("Term to search for in documentation (e.g., 'call_out', 'mapping', 'socket')"),
+        },
+      }, async({query}) => {
+        try {
+          const result = await this.searchDocs(query)
+
+          return {
+            content: [
+              {
+                type: "text",
+                text: result,
+              },
+            ],
+          }
+        } catch(error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: ${error.message}`,
+              },
+            ],
+            isError: true,
+          }
+        }
+      })
+    }
   }
 
   async runSymbol(lpcFile) {
     return new Promise((resolve, reject) => {
       const normalizedPath = this.normalizePath(lpcFile)
-      const symbolPath = path.join(this.binDir, "symbol")
+      const binDir = new DirectoryObject(this.binDir)
+      const symbolPath = binDir.getFile("symbol").path
+      const configFile = new FileObject(this.configFile)
       const proc = spawn(symbolPath, [this.configFile, normalizedPath], {
-        cwd: path.dirname(this.configFile),
+        cwd: configFile.parentPath,
       })
 
       let stdout = ""
@@ -224,11 +206,11 @@ class FluffOSMCPServer {
       proc.on("close", code => {
         const output = (stdout + stderr).trim()
 
-        if(code === 0) {
+        if(code === 0)
           resolve(`✓ File validated successfully\n\n${output}`)
-        } else {
+        else
           resolve(`✗ Validation failed (exit code: ${code})\n\n${output}`)
-        }
+
       })
 
       proc.on("error", err => {
@@ -240,9 +222,11 @@ class FluffOSMCPServer {
   async runLpcc(lpcFile) {
     return new Promise((resolve, reject) => {
       const normalizedPath = this.normalizePath(lpcFile)
-      const lpccPath = path.join(this.binDir, "lpcc")
+      const binDir = new DirectoryObject(this.binDir)
+      const lpccPath = binDir.getFile("lpcc").path
+      const configFile = new FileObject(this.configFile)
       const proc = spawn(lpccPath, [this.configFile, normalizedPath], {
-        cwd: path.dirname(this.configFile),
+        cwd: configFile.parentPath,
       })
 
       let stdout = ""
@@ -274,7 +258,9 @@ class FluffOSMCPServer {
 
   async searchDocs(query) {
     return new Promise((resolve, reject) => {
-      const scriptPath = path.join(path.dirname(new URL(import.meta.url).pathname), "scripts", "search_docs.sh")
+      const moduleFile = new FileObject(new URL(import.meta.url).pathname)
+      const scriptsDir = moduleFile.parent.getDirectory("scripts")
+      const scriptPath = scriptsDir.getFile("search_docs.sh").path
       const proc = spawn(scriptPath, [this.docsDir, query])
 
       let stdout = ""
@@ -307,6 +293,8 @@ class FluffOSMCPServer {
   }
 
   async run() {
+    await this.initialize()
+
     const transport = new StdioServerTransport()
     await this.server.connect(transport)
 
