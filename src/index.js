@@ -89,9 +89,9 @@ class FluffOSMCPServer {
       description: "Validate an LPC file using the FluffOS driver's symbol tool. " +
         "Compiles the file and reports success or failure with any " +
         "compilation errors. Fast and lightweight check for code validity.",
-      inputSchema: {
+      inputSchema: z.object({
         file: z.string().describe("Absolute path to the LPC file to validate"),
-      },
+      }),
     }, async({file}) => {
       try {
         const result = await this.runSymbol(file)
@@ -120,9 +120,9 @@ class FluffOSMCPServer {
     // Register disassemble tool
     this.server.registerTool("fluffos_disassemble", {
       description: "Disassemble an LPC file to show compiled bytecode using lpcc. Returns detailed bytecode, function tables, strings, and disassembly. Useful for debugging and understanding how code compiles.",
-      inputSchema: {
+      inputSchema: z.object({
         file: z.string().describe("Absolute path to the LPC file to disassemble"),
-      },
+      }),
     }, async({file}) => {
       try {
         const result = await this.runLpcc(file)
@@ -152,9 +152,9 @@ class FluffOSMCPServer {
     if(this.docsDir) {
       this.server.registerTool("fluffos_doc_lookup", {
         description: "Search FluffOS documentation for information about efuns, applies, concepts, etc. Searches markdown documentation files.",
-        inputSchema: {
+        inputSchema: z.object({
           query: z.string().describe("Term to search for in documentation (e.g., 'call_out', 'mapping', 'socket')"),
-        },
+        }),
       }, async({query}) => {
         try {
           const result = await this.searchDocs(query)
