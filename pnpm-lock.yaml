@@ -19,8 +19,8 @@ importers:
         version: 4.3.6
     devDependencies:
       '@gesslar/uglier':
-        specifier: ^1.1.0
-        version: 1.6.2(eslint@9.39.2)
+        specifier: ^2.0.0
+        version: 2.0.0(eslint@9.39.2)
       eslint:
         specifier: ^9.39.2
         version: 9.39.2
@@ -82,8 +82,8 @@ packages:
     resolution: {integrity: sha512-9gsR9V2vfY628AqvYp2sslSUrQqLOXMvS5XewtWuqWyEUyHJ8zupYYal10QXHTaIcvKz9mus/oX95LY1LvGNjg==}
     engines: {node: '>=24.13.0'}
 
-  '@gesslar/uglier@1.6.2':
-    resolution: {integrity: sha512-51c6pZQJ/4qfqfz8DHZErmUfN+YEHrUUxsryHPEyHhnw1vpol5qjZBMnj+GwPFKx8YXqCybQNtimTaCF7uHPnQ==}
+  '@gesslar/uglier@2.0.0':
+    resolution: {integrity: sha512-9NWCJ66KdHDJc/flsiXW1hyEA3DAXOja8R6foltGiyqWl30aT6aRFEW3z3n3b0u+CMk+UV8iTQKIM+tXkTYZQA==}
     engines: {node: '>=24.13.0'}
     hasBin: true
 
@@ -139,8 +139,8 @@ packages:
   '@types/json-schema@7.0.15':
     resolution: {integrity: sha512-5+fP8P8MFNC+AyZCDxrB2pkZFPGzqQWUzpSeuuVLvm8VMcorNYavBqoFcxK8bQz4Qsbn4oUEEem4wDLfcysGHA==}
 
-  '@typescript-eslint/types@8.56.0':
-    resolution: {integrity: sha512-DBsLPs3GsWhX5HylbP9HNG15U0bnwut55Lx12bHB9MpXxQ+R5GC8MwQe+N1UFXxAeQDvEsEDY6ZYwX03K7Z6HQ==}
+  '@typescript-eslint/types@8.56.1':
+    resolution: {integrity: sha512-dbMkdIUkIkchgGDIv7KLUpa0Mda4IYjo4IAMJUZ+3xNoUXxMsk9YtKpTHSChRS85o+H9ftm51gsK1dZReY9CVw==}
     engines: {node: ^18.18.0 || ^20.9.0 || >=21.1.0}
 
   accepts@2.0.0:
@@ -304,8 +304,8 @@ packages:
     resolution: {integrity: sha512-TtpcNJ3XAzx3Gq8sWRzJaVajRs0uVxA2YAkdb1jm2YkPz4G6egUFAyA3n5vtEIZefPk5Wa4UXbKuS5fKkJWdgA==}
     engines: {node: '>=10'}
 
-  eslint-plugin-jsdoc@62.7.0:
-    resolution: {integrity: sha512-jootujJOIGMkCLN+/WgDFKtaclCt2MEEy9cZ1RyK19Az1JvVI3awbeMXNlJ6y4h8RWIJpcXqmxsu4t9NThYbNw==}
+  eslint-plugin-jsdoc@62.7.1:
+    resolution: {integrity: sha512-4Zvx99Q7d1uggYBUX/AIjvoyqXhluGbbKrRmG8SQTLprPFg6fa293tVJH1o1GQwNe3lUydd8ZHzn37OaSncgSQ==}
     engines: {node: ^20.19.0 || ^22.13.0 || >=24}
     peerDependencies:
       eslint: ^7.0.0 || ^8.0.0 || ^9.0.0 || ^10.0.0
@@ -440,8 +440,8 @@ packages:
     resolution: {integrity: sha512-oahGvuMGQlPw/ivIYBjVSrWAfWLBeku5tpPE2fOPLi+WHffIWbuh2tCjhyQhTBPMf5E9jDEH4FOmTYgYwbKwtQ==}
     engines: {node: '>=18'}
 
-  globals@17.3.0:
-    resolution: {integrity: sha512-yMqGUQVVCkD4tqjOJf3TnrvaaHDMYp4VlUSObbkIiuCPe/ofdMBFIAcBbCSRFWOnos6qRiTVStDwqPLUclaxIw==}
+  globals@17.4.0:
+    resolution: {integrity: sha512-hjrNztw/VajQwOLsMNT1cbJiH2muO3OROCHnbehc8eY5JyD2gqz4AcMHPqgaOR59DjgUjYAYLeH699g/eWi2jw==}
     engines: {node: '>=18'}
 
   gopd@1.2.0:
@@ -822,7 +822,7 @@ snapshots:
   '@es-joy/jsdoccomment@0.84.0':
     dependencies:
       '@types/estree': 1.0.8
-      '@typescript-eslint/types': 8.56.0
+      '@typescript-eslint/types': 8.56.1
       comment-parser: 1.4.5
       esquery: 1.7.0
       jsdoc-type-pratt-parser: 7.1.1
@@ -885,14 +885,14 @@ snapshots:
       supports-color: 10.2.2
       yaml: 2.8.2
 
-  '@gesslar/uglier@1.6.2(eslint@9.39.2)':
+  '@gesslar/uglier@2.0.0(eslint@9.39.2)':
     dependencies:
       '@gesslar/colours': 0.8.0
       '@gesslar/toolkit': 3.42.0
       '@skarab/detect-package-manager': 1.0.0
       '@stylistic/eslint-plugin': 5.9.0(eslint@9.39.2)
-      eslint-plugin-jsdoc: 62.7.0(eslint@9.39.2)
-      globals: 17.3.0
+      eslint-plugin-jsdoc: 62.7.1(eslint@9.39.2)
+      globals: 17.4.0
     transitivePeerDependencies:
       - eslint
       - supports-color
@@ -941,7 +941,7 @@ snapshots:
   '@stylistic/eslint-plugin@5.9.0(eslint@9.39.2)':
     dependencies:
       '@eslint-community/eslint-utils': 4.9.1(eslint@9.39.2)
-      '@typescript-eslint/types': 8.56.0
+      '@typescript-eslint/types': 8.56.1
       eslint: 9.39.2
       eslint-visitor-keys: 4.2.1
       espree: 10.4.0
@@ -952,7 +952,7 @@ snapshots:
 
   '@types/json-schema@7.0.15': {}
 
-  '@typescript-eslint/types@8.56.0': {}
+  '@typescript-eslint/types@8.56.1': {}
 
   accepts@2.0.0:
     dependencies:
@@ -1103,7 +1103,7 @@ snapshots:
 
   escape-string-regexp@4.0.0: {}
 
-  eslint-plugin-jsdoc@62.7.0(eslint@9.39.2):
+  eslint-plugin-jsdoc@62.7.1(eslint@9.39.2):
     dependencies:
       '@es-joy/jsdoccomment': 0.84.0
       '@es-joy/resolve.exports': 1.2.0
@@ -1308,7 +1308,7 @@ snapshots:
 
   globals@14.0.0: {}
 
-  globals@17.3.0: {}
+  globals@17.4.0: {}
 
   gopd@1.2.0: {}
 
