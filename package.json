@@ -6,7 +6,7 @@
     "url": "https://gesslar.dev"
   },
   "version": "0.2.1",
-  "license": "Unlicense",
+  "license": "0BSD",
   "homepage": "https://github.com/gesslar/fluffos-mcp#readme",
   "repository": {
     "type": "git",
@@ -23,9 +23,8 @@
     "white",
     "cheddar"
   ],
-  "packageManager": "pnpm@10.28.0",
   "engines": {
-    "node": ">=22"
+    "node": ">=24.11.0"
   },
   "main": "src/index.js",
   "type": "module",
@@ -36,20 +35,20 @@
     "start": "node src/index.js",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
-    "submit": "pnpm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
-    "update": "pnpm self-update && pnpx npm-check-updates -u && pnpm install",
+    "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
+    "update": "npx npm-check-updates -u && npm install",
     "pr": "gt submit -p --ai",
-    "patch": "pnpm version patch",
-    "minor": "pnpm version minor",
-    "major": "pnpm version major"
+    "patch": "npm version patch",
+    "minor": "npm version minor",
+    "major": "npm version major"
   },
   "dependencies": {
-    "@gesslar/toolkit": "^5.0.0",
-    "@modelcontextprotocol/sdk": "^1.25.2",
-    "zod": "^4.3.5"
+    "@gesslar/toolkit": "^5.0.1",
+    "@modelcontextprotocol/sdk": "^1.29.0",
+    "zod": "^4.3.6"
   },
   "devDependencies": {
-    "@gesslar/uglier": "^2.0.0",
-    "eslint": "^10.0.2"
+    "@gesslar/uglier": "^2.4.0",
+    "eslint": "^10.2.0"
   }
 }

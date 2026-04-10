@@ -4,9 +4,10 @@ import {McpServer} from "@modelcontextprotocol/sdk/server/mcp.js"
 import {StdioServerTransport} from "@modelcontextprotocol/sdk/server/stdio.js"
 import * as z from "zod/v4"
 import {spawn} from "child_process"
-import {FileObject, DirectoryObject} from "@gesslar/toolkit"
+import {FileObject, DirectoryObject, Sass} from "@gesslar/toolkit"
+import url from "node:url"
 
-class FluffOSMCPServer {
+export class FluffOSMCPServer {
   constructor() {
     this.server = new McpServer(
       {
@@ -56,13 +57,14 @@ class FluffOSMCPServer {
     try {
       const configFile = new FileObject(this.configFile)
       const configContent = await configFile.read()
-      const match = configContent.match(/^mudlib directory\s*:\s*(.+)$/m)
+      const {mudlib} = /^mudlib directory\s*:\s*(?<mudlib>.+)$/m.exec(configContent)?.groups ?? {}
 
-      if(match)
-        return match[1].trim()
+      if(!mudlib)
+        throw Sass.new(`No such entry 'mudlib directory' in ${configFile.path}`)
 
-    } catch(err) {
-      console.error(`Warning: Could not parse mudlib directory from config: ${err.message}`)
+      return mudlib
+    } catch(error) {
+      console.error(`Warning: Could not parse mudlib directory from config: ${error.message}`)
     }
 
     return null
@@ -258,9 +260,14 @@ class FluffOSMCPServer {
 
   async searchDocs(query) {
     return new Promise((resolve, reject) => {
-      const moduleFile = new FileObject(new URL(import.meta.url).pathname)
-      const scriptsDir = moduleFile.parent.getDirectory("scripts")
-      const scriptPath = scriptsDir.getFile("search_docs.sh").path
+      const scriptsFile = new FileObject(
+        "src/search_docs.sh",
+        url.fileURLToPath(new url.URL(import.meta.url))
+      )
+
+      console.error(`Loading ${scriptsFile.path}`)
+
+      const scriptPath = scriptsFile.path
       const proc = spawn(scriptPath, [this.docsDir, query])
 
       let stdout = ""
@@ -302,5 +309,9 @@ class FluffOSMCPServer {
   }
 }
 
-const server = new FluffOSMCPServer()
-server.run().catch(console.error)
+// Only run the server if this file is executed directly
+import {fileURLToPath} from "url"
+if(process.argv[1] === fileURLToPath(import.meta.url)) {
+  const server = new FluffOSMCPServer()
+  server.run().catch(console.error)
+}
