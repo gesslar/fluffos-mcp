@@ -10,7 +10,7 @@ importers:
     dependencies:
       '@gesslar/toolkit':
         specifier: ^5.0.0
-        version: 5.0.0
+        version: 5.1.0
       '@modelcontextprotocol/sdk':
         specifier: ^1.25.2
         version: 1.29.0(zod@4.3.6)
@@ -72,10 +72,6 @@ packages:
     resolution: {integrity: sha512-+u3j2gG6nWlAgqVJ2zXBtiSDMlc71US4sCG1D4EksZI72MUTYFuE5QYew2+XAGZwXKi31ibdNil+Hoy0y2jGEA==}
     engines: {node: '>=24.11.0'}
     hasBin: true
-
-  '@gesslar/toolkit@5.0.0':
-    resolution: {integrity: sha512-SsyM9aqlpKKwpZMorNH9BqgnpR+3/W7T7WRyRGNn0NYweABeVtdjLtK623T6Fl+cMWvNJUOnuKtitMqnyyZCdQ==}
-    engines: {node: '>=24.13.0'}
 
   '@gesslar/toolkit@5.1.0':
     resolution: {integrity: sha512-RVig7CarrujaKkw6byPz5co/OEykCZTsBGfd5Ce91EIxarQhZCJKoluwXWGItw8szKHcKb2R3OzqEK9icEwO1A==}
@@ -941,14 +937,6 @@ snapshots:
       levn: 0.4.1
 
   '@gesslar/colours@1.0.0': {}
-
-  '@gesslar/toolkit@5.0.0':
-    dependencies:
-      '@gesslar/colours': 1.0.0
-      ajv: 8.18.0
-      json5: 2.2.3
-      supports-color: 10.2.2
-      yaml: 2.8.3
 
   '@gesslar/toolkit@5.1.0':
     dependencies:
