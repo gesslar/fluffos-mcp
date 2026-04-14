@@ -23,6 +23,21 @@ This MCP server exposes FluffOS's powerful CLI utilities (`symbol` and `lpcc`) t
 - **`fluffos_disassemble`**: Disassemble LPC to bytecode using `lpcc`
 - **`fluffos_doc_lookup`**: Search FluffOS documentation for efuns, applies, concepts, etc.
 
+All three tools are **read-only** and **idempotent** — they never modify files, drivers, or running MUDs, and are safe for agents to auto-invoke.
+
+### When to use which tool
+
+| I want to… | Use |
+| --- | --- |
+| Check whether a file compiles against the driver | `fluffos_validate` |
+| See the bytecode a function compiles to | `fluffos_disassemble` |
+| Investigate why a pattern is slow | `fluffos_disassemble` |
+| Look up an efun signature or apply semantics | `fluffos_doc_lookup` |
+| Find out if an efun exists in *this* driver build | `fluffos_validate` on a file that calls it |
+| Pre-commit / pre-deploy sanity check | `fluffos_validate` |
+
+`fluffos_doc_lookup` is only registered when the server is started with `FLUFFOS_DOCS_DIR` set.
+
 ## Prerequisites
 
 ### 1. FluffOS Installation

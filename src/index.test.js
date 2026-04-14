@@ -103,7 +103,7 @@ describe("FluffOSMCPServer", () => {
       assert.ok(!docLookupCall, "fluffos_doc_lookup tool should not be registered")
     })
 
-    it("should define validate tool with correct schema", () => {
+    it("should define validate tool with quality metadata", () => {
       const server = new FluffOSMCPServer()
       const registerMock = mock.method(server.server, "registerTool")
 
@@ -113,12 +113,31 @@ describe("FluffOSMCPServer", () => {
         call => call.arguments[0] === "fluffos_validate"
       )
       assert.ok(validateCall)
-      const schema = validateCall.arguments[1]
-      assert.ok(schema.description.includes("Validate an LPC file"))
-      assert.ok(schema.inputSchema)
+      const config = validateCall.arguments[1]
+
+      // Title
+      assert.strictEqual(typeof config.title, "string")
+      assert.ok(config.title.length > 0, "title should not be empty")
+
+      // Description quality markers
+      assert.ok(config.description.includes("Compile an LPC source file"))
+      assert.ok(config.description.includes("Use when:"), "description should include 'Use when:' guidance")
+      assert.ok(config.description.includes("Do not use for:"), "description should include 'Do not use for:' guidance")
+      assert.ok(config.description.includes("Returns"), "description should document return shape")
+      assert.ok(config.description.includes("fluffos_disassemble"), "description should cross-reference sibling tools")
+
+      // Input and output schemas present
+      assert.ok(config.inputSchema, "inputSchema should be defined")
+      assert.ok(config.outputSchema, "outputSchema should be defined")
+
+      // Annotations communicate behaviour
+      assert.ok(config.annotations, "annotations should be defined")
+      assert.strictEqual(config.annotations.readOnlyHint, true)
+      assert.strictEqual(config.annotations.idempotentHint, true)
+      assert.strictEqual(config.annotations.openWorldHint, false)
     })
 
-    it("should define disassemble tool with correct schema", () => {
+    it("should define disassemble tool with quality metadata", () => {
       const server = new FluffOSMCPServer()
       const registerMock = mock.method(server.server, "registerTool")
 
@@ -128,12 +147,27 @@ describe("FluffOSMCPServer", () => {
         call => call.arguments[0] === "fluffos_disassemble"
       )
       assert.ok(disassembleCall)
-      const schema = disassembleCall.arguments[1]
-      assert.ok(schema.description.includes("Disassemble an LPC file"))
-      assert.ok(schema.inputSchema)
+      const config = disassembleCall.arguments[1]
+
+      assert.strictEqual(typeof config.title, "string")
+      assert.ok(config.title.length > 0, "title should not be empty")
+
+      assert.ok(config.description.includes("bytecode disassembly"))
+      assert.ok(config.description.includes("Use when:"))
+      assert.ok(config.description.includes("Do not use for:"))
+      assert.ok(config.description.includes("Returns"))
+      assert.ok(config.description.includes("fluffos_validate"), "description should cross-reference sibling tools")
+
+      assert.ok(config.inputSchema)
+      assert.ok(config.outputSchema)
+
+      assert.ok(config.annotations)
+      assert.strictEqual(config.annotations.readOnlyHint, true)
+      assert.strictEqual(config.annotations.idempotentHint, true)
+      assert.strictEqual(config.annotations.openWorldHint, false)
     })
 
-    it("should define doc lookup tool with correct schema when enabled", () => {
+    it("should define doc lookup tool with quality metadata when enabled", () => {
       const server = new FluffOSMCPServer()
       server.docsDir = "/test/docs"
       const registerMock = mock.method(server.server, "registerTool")
@@ -144,9 +178,24 @@ describe("FluffOSMCPServer", () => {
         call => call.arguments[0] === "fluffos_doc_lookup"
       )
       assert.ok(docLookupCall)
-      const schema = docLookupCall.arguments[1]
-      assert.ok(schema.description.includes("Search FluffOS documentation"))
-      assert.ok(schema.inputSchema)
+      const config = docLookupCall.arguments[1]
+
+      assert.strictEqual(typeof config.title, "string")
+      assert.ok(config.title.length > 0, "title should not be empty")
+
+      assert.ok(config.description.includes("FluffOS markdown documentation"))
+      assert.ok(config.description.includes("Use when:"))
+      assert.ok(config.description.includes("Do not use for:"))
+      assert.ok(config.description.includes("Returns"))
+      assert.ok(config.description.includes("fluffos_validate"), "description should cross-reference sibling tools")
+
+      assert.ok(config.inputSchema)
+      assert.ok(config.outputSchema)
+
+      assert.ok(config.annotations)
+      assert.strictEqual(config.annotations.readOnlyHint, true)
+      assert.strictEqual(config.annotations.idempotentHint, true)
+      assert.strictEqual(config.annotations.openWorldHint, false)
     })
   })
 
@@ -155,8 +204,12 @@ describe("FluffOSMCPServer", () => {
       const server = new FluffOSMCPServer()
       const registerMock = mock.method(server.server, "registerTool")
 
-      // Mock runSymbol to return success
-      mock.method(server, "runSymbol", async() => "✓ File validated successfully")
+      // Mock runSymbol to return structured success
+      mock.method(server, "runSymbol", async() => ({
+        success: true,
+        exitCode: 0,
+        output: "compiled clean",
+      }))
 
       server.setupTools()
 
@@ -166,15 +219,46 @@ describe("FluffOSMCPServer", () => {
       const handler = validateCall.arguments[2]
 
       const result = await handler({file: "/test/file.c"})
-      assert.strictEqual(result.content[0].text, "✓ File validated successfully")
+      assert.ok(result.content[0].text.includes("✓ File validated successfully"))
+      assert.ok(result.content[0].text.includes("compiled clean"))
+      assert.deepStrictEqual(result.structuredContent, {
+        success: true,
+        exitCode: 0,
+        output: "compiled clean",
+      })
       assert.strictEqual(result.isError, undefined)
     })
 
-    it("should handle validate tool returning error", async() => {
+    it("should handle validate tool returning compilation failure", async() => {
       const server = new FluffOSMCPServer()
       const registerMock = mock.method(server.server, "registerTool")
 
-      // Mock runSymbol to throw error
+      mock.method(server, "runSymbol", async() => ({
+        success: false,
+        exitCode: 1,
+        output: "parse error at line 10",
+      }))
+
+      server.setupTools()
+
+      const validateCall = registerMock.mock.calls.find(
+        call => call.arguments[0] === "fluffos_validate"
+      )
+      const handler = validateCall.arguments[2]
+
+      const result = await handler({file: "/test/file.c"})
+      assert.ok(result.content[0].text.includes("✗ Validation failed"))
+      assert.ok(result.content[0].text.includes("exit code: 1"))
+      assert.ok(result.content[0].text.includes("parse error at line 10"))
+      assert.strictEqual(result.structuredContent.success, false)
+      assert.strictEqual(result.structuredContent.exitCode, 1)
+      assert.strictEqual(result.isError, undefined)
+    })
+
+    it("should handle validate tool when helper throws", async() => {
+      const server = new FluffOSMCPServer()
+      const registerMock = mock.method(server.server, "registerTool")
+
       mock.method(server, "runSymbol", async() => {
         throw new Error("Validation failed")
       })
@@ -195,8 +279,11 @@ describe("FluffOSMCPServer", () => {
       const server = new FluffOSMCPServer()
       const registerMock = mock.method(server.server, "registerTool")
 
-      // Mock runLpcc to return bytecode
-      mock.method(server, "runLpcc", async() => "Bytecode output")
+      mock.method(server, "runLpcc", async() => ({
+        success: true,
+        exitCode: 0,
+        output: "Bytecode output",
+      }))
 
       server.setupTools()
 
@@ -207,14 +294,42 @@ describe("FluffOSMCPServer", () => {
 
       const result = await handler({file: "/test/file.c"})
       assert.strictEqual(result.content[0].text, "Bytecode output")
+      assert.deepStrictEqual(result.structuredContent, {
+        success: true,
+        exitCode: 0,
+        output: "Bytecode output",
+      })
       assert.strictEqual(result.isError, undefined)
     })
 
-    it("should handle disassemble tool returning error", async() => {
+    it("should handle disassemble tool returning compilation failure", async() => {
       const server = new FluffOSMCPServer()
       const registerMock = mock.method(server.server, "registerTool")
 
-      // Mock runLpcc to throw error
+      mock.method(server, "runLpcc", async() => ({
+        success: false,
+        exitCode: 2,
+        output: "lpcc: syntax error",
+      }))
+
+      server.setupTools()
+
+      const disassembleCall = registerMock.mock.calls.find(
+        call => call.arguments[0] === "fluffos_disassemble"
+      )
+      const handler = disassembleCall.arguments[2]
+
+      const result = await handler({file: "/test/file.c"})
+      assert.ok(result.content[0].text.includes("Error (exit code: 2)"))
+      assert.ok(result.content[0].text.includes("lpcc: syntax error"))
+      assert.strictEqual(result.structuredContent.success, false)
+      assert.strictEqual(result.isError, undefined)
+    })
+
+    it("should handle disassemble tool when helper throws", async() => {
+      const server = new FluffOSMCPServer()
+      const registerMock = mock.method(server.server, "registerTool")
+
       mock.method(server, "runLpcc", async() => {
         throw new Error("Disassembly failed")
       })
@@ -236,8 +351,11 @@ describe("FluffOSMCPServer", () => {
       server.docsDir = "/test/docs"
       const registerMock = mock.method(server.server, "registerTool")
 
-      // Mock searchDocs to return results
-      mock.method(server, "searchDocs", async() => 'Found documentation for "test"')
+      mock.method(server, "searchDocs", async() => ({
+        found: true,
+        query: "call_out",
+        results: "call_out(func, delay)",
+      }))
 
       server.setupTools()
 
@@ -246,17 +364,43 @@ describe("FluffOSMCPServer", () => {
       )
       const handler = docLookupCall.arguments[2]
 
-      const result = await handler({query: "test"})
-      assert.ok(result.content[0].text.includes('Found documentation for "test"'))
+      const result = await handler({query: "call_out"})
+      assert.ok(result.content[0].text.includes('Found documentation for "call_out"'))
+      assert.ok(result.content[0].text.includes("call_out(func, delay)"))
+      assert.strictEqual(result.structuredContent.found, true)
+      assert.strictEqual(result.structuredContent.query, "call_out")
       assert.strictEqual(result.isError, undefined)
     })
 
-    it("should handle doc lookup tool returning error", async() => {
+    it("should handle doc lookup tool returning no results", async() => {
       const server = new FluffOSMCPServer()
       server.docsDir = "/test/docs"
       const registerMock = mock.method(server.server, "registerTool")
 
-      // Mock searchDocs to throw error
+      mock.method(server, "searchDocs", async() => ({
+        found: false,
+        query: "nonexistent",
+        results: 'No documentation found for "nonexistent".',
+      }))
+
+      server.setupTools()
+
+      const docLookupCall = registerMock.mock.calls.find(
+        call => call.arguments[0] === "fluffos_doc_lookup"
+      )
+      const handler = docLookupCall.arguments[2]
+
+      const result = await handler({query: "nonexistent"})
+      assert.ok(result.content[0].text.includes('No documentation found for "nonexistent"'))
+      assert.strictEqual(result.structuredContent.found, false)
+      assert.strictEqual(result.isError, undefined)
+    })
+
+    it("should handle doc lookup tool when helper throws", async() => {
+      const server = new FluffOSMCPServer()
+      server.docsDir = "/test/docs"
+      const registerMock = mock.method(server.server, "registerTool")
+
       mock.method(server, "searchDocs", async() => {
         throw new Error("Search failed")
       })
@@ -304,7 +448,11 @@ describe("FluffOSMCPServer", () => {
       // Pick a term you know exists in your docs, e.g. 'call_out' or 'mapping'
       const query = "call_out"
       const result = await server.searchDocs(query)
-      assert.ok(result.includes(query) || result.includes("No documentation found"), "Should return search results or not found message")
+      assert.ok(typeof result === "object", "Should return a structured result")
+      assert.ok("found" in result, "result should have 'found' field")
+      assert.ok("query" in result, "result should have 'query' field")
+      assert.ok("results" in result, "result should have 'results' field")
+      assert.strictEqual(result.query, query)
     })
   })
 })
