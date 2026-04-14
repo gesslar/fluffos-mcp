@@ -311,8 +311,7 @@ export class FluffOSMCPServer {
 }
 
 // Only run the server if this file is executed directly
-import {fileURLToPath} from "url"
-if(process.argv[1] === fileURLToPath(import.meta.url)) {
+if(process.argv[1] === url.fileURLToPath(import.meta.url)) {
   const server = new FluffOSMCPServer()
   server.run().catch(console.error)
 }
