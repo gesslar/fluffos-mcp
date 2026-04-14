@@ -12,21 +12,6 @@ describe("FluffOSMCPServer", () => {
       assert.ok(server.server)
       assert.strictEqual(server.mudlibDir, null)
     })
-
-    it("should read environment variables", () => {
-      // process.env.FLUFFOS_BIN_DIR = "/test/bin"
-      // process.env.MUD_RUNTIME_CONFIG_FILE = "/test/config"
-      // process.env.FLUFFOS_DOCS_DIR = "/test/docs"
-
-      // const server = new FluffOSMCPServer()
-      // assert.strictEqual(server.binDir, "/test/bin")
-      // assert.strictEqual(server.configFile, "/test/config")
-      // assert.strictEqual(server.docsDir, "/test/docs")
-
-      // delete process.env.FLUFFOS_BIN_DIR
-      // delete process.env.MUD_RUNTIME_CONFIG_FILE
-      // delete process.env.FLUFFOS_DOCS_DIR
-    })
   })
 
   describe("normalizePath", () => {

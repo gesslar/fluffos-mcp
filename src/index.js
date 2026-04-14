@@ -58,11 +58,12 @@ export class FluffOSMCPServer {
       const configFile = new FileObject(this.configFile)
       const configContent = await configFile.read()
       const {mudlib} = /^mudlib directory\s*:\s*(?<mudlib>.+)$/m.exec(configContent)?.groups ?? {}
+      const trimmed = mudlib?.trim()
 
-      if(!mudlib)
+      if(!trimmed)
         throw Sass.new(`No such entry 'mudlib directory' in ${configFile.path}`)
 
-      return mudlib
+      return trimmed
     } catch(error) {
       console.error(`Warning: Could not parse mudlib directory from config: ${error.message}`)
     }
