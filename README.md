@@ -256,6 +256,15 @@ PRs welcome! This is a simple wrapper that can be extended with more FluffOS too
 - [**FluffOS Team**](<https://github.com/fluffos/fluffos>) - For the amazing driver and CLI tools
 - [**Model Context Protocol**](<https://modelcontextprotocol.io/>) - Making this integration possible
 
-## ~~License~~
+## License
 
-Unlicense - Public Domain. Do whatever you want with this code.
+`@gesslar/fluffos-mcp` is released under the [0BSD](LICENSE.txt).
+
+This package includes or depends on third-party components under their own
+licenses:
+
+| Dependency | License |
+| --- | --- |
+| [@gesslar/toolkit](https://github.com/gesslar/toolkit) | 0BSD |
+| [@modelcontextprotocol/sdk](https://github.com/modelcontextprotocol/typescript-sdk) | MIT |
+| [zod](https://github.com/colinhacks/zod) | MIT |
