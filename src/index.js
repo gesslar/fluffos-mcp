@@ -36,6 +36,18 @@ export class FluffOSMCPServer {
     this.enableEval = ["1", "true", "yes", "on"].includes(
       (process.env.FLUFFOS_ENABLE_EVAL ?? "").trim().toLowerCase()
     )
+    // Wall-clock cap for a single fluffos_eval run before the child is killed.
+    // Override with FLUFFOS_EVAL_TIMEOUT_MS; falls back to 30s on unset/invalid.
+    const parsedTimeout = Number.parseInt(process.env.FLUFFOS_EVAL_TIMEOUT_MS ?? "", 10)
+    this.evalTimeoutMs = Number.isInteger(parsedTimeout) && parsedTimeout > 0
+      ? parsedTimeout
+      : 30000
+    // Reject oversized eval payloads before they hit the temp filesystem.
+    // Override with FLUFFOS_EVAL_MAX_BYTES; falls back to 10 MiB on unset/invalid.
+    const parsedMaxBytes = Number.parseInt(process.env.FLUFFOS_EVAL_MAX_BYTES ?? "", 10)
+    this.evalMaxBytes = Number.isInteger(parsedMaxBytes) && parsedMaxBytes > 0
+      ? parsedMaxBytes
+      : 10 * 1024 * 1024
     this.mudlibDir = null
   }
 
@@ -428,8 +440,17 @@ export class FluffOSMCPServer {
     // driver's file system), so it does NOT need to live inside the mudlib
     // jail — a temp file anywhere the process can read works. Only the LPC
     // statements themselves execute inside the jail.
+    const byteLength = Buffer.byteLength(code, "utf8")
+    if(byteLength > this.evalMaxBytes)
+      throw new Error(
+        `Eval payload too large: ${byteLength} bytes exceeds the ${this.evalMaxBytes}-byte limit ` +
+        `(set FLUFFOS_EVAL_MAX_BYTES to change it).`
+      )
+
     const scriptPath = join(tmpdir(), `fluffos-eval-${randomUUID()}.lpc`)
-    await writeFile(scriptPath, code.endsWith("\n") ? code : `${code}\n`)
+    // 0o600: the eval script may contain sensitive code, and tmpdir() is
+    // shared — keep it readable only by the user running the server.
+    await writeFile(scriptPath, code.endsWith("\n") ? code : `${code}\n`, {mode: 0o600})
 
     try {
       return await new Promise((resolve, reject) => {
@@ -442,6 +463,15 @@ export class FluffOSMCPServer {
 
         let stdout = ""
         let stderr = ""
+        let timedOut = false
+
+        // The driver's own eval-cost limit kills runaway CPU loops, but a
+        // genuinely blocked statement would otherwise hang this call (and the
+        // child) forever. Cap the wall-clock lifetime and SIGKILL on expiry.
+        const timer = setTimeout(() => {
+          timedOut = true
+          proc.kill("SIGKILL")
+        }, this.evalTimeoutMs)
 
         proc.stdout.on("data", data => {
           stdout += data.toString()
@@ -452,7 +482,18 @@ export class FluffOSMCPServer {
         })
 
         proc.on("close", code => {
+          clearTimeout(timer)
           const output = (stdout + stderr).trim()
+
+          if(timedOut) {
+            resolve({
+              success: false,
+              exitCode: code,
+              output: `${output}\n\n✗ Evaluation timed out after ${this.evalTimeoutMs}ms and was killed.`.trim(),
+            })
+
+            return
+          }
 
           resolve({
             success: code === 0,
@@ -462,6 +503,7 @@ export class FluffOSMCPServer {
         })
 
         proc.on("error", err => {
+          clearTimeout(timer)
           reject(new Error(`Failed to run lpcshell: ${err.message}`))
         })
       })

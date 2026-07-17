@@ -12,6 +12,67 @@ describe("FluffOSMCPServer", () => {
       assert.ok(server.server)
       assert.strictEqual(server.mudlibDir, null)
     })
+
+    it("should default evalTimeoutMs to 30000 when unset or invalid", () => {
+      const saved = process.env.FLUFFOS_EVAL_TIMEOUT_MS
+      try {
+        delete process.env.FLUFFOS_EVAL_TIMEOUT_MS
+        assert.strictEqual(new FluffOSMCPServer().evalTimeoutMs, 30000)
+
+        process.env.FLUFFOS_EVAL_TIMEOUT_MS = "not-a-number"
+        assert.strictEqual(new FluffOSMCPServer().evalTimeoutMs, 30000)
+
+        process.env.FLUFFOS_EVAL_TIMEOUT_MS = "0"
+        assert.strictEqual(new FluffOSMCPServer().evalTimeoutMs, 30000)
+      } finally {
+        if(saved === undefined)
+          delete process.env.FLUFFOS_EVAL_TIMEOUT_MS
+        else
+          process.env.FLUFFOS_EVAL_TIMEOUT_MS = saved
+      }
+    })
+
+    it("should honour a valid FLUFFOS_EVAL_TIMEOUT_MS override", () => {
+      const saved = process.env.FLUFFOS_EVAL_TIMEOUT_MS
+      try {
+        process.env.FLUFFOS_EVAL_TIMEOUT_MS = "5000"
+        assert.strictEqual(new FluffOSMCPServer().evalTimeoutMs, 5000)
+      } finally {
+        if(saved === undefined)
+          delete process.env.FLUFFOS_EVAL_TIMEOUT_MS
+        else
+          process.env.FLUFFOS_EVAL_TIMEOUT_MS = saved
+      }
+    })
+
+    it("should default evalMaxBytes to 10 MiB, honouring a valid override", () => {
+      const saved = process.env.FLUFFOS_EVAL_MAX_BYTES
+      try {
+        const tenMiB = 10 * 1024 * 1024
+        delete process.env.FLUFFOS_EVAL_MAX_BYTES
+        assert.strictEqual(new FluffOSMCPServer().evalMaxBytes, tenMiB)
+
+        process.env.FLUFFOS_EVAL_MAX_BYTES = "garbage"
+        assert.strictEqual(new FluffOSMCPServer().evalMaxBytes, tenMiB)
+
+        process.env.FLUFFOS_EVAL_MAX_BYTES = "2048"
+        assert.strictEqual(new FluffOSMCPServer().evalMaxBytes, 2048)
+      } finally {
+        if(saved === undefined)
+          delete process.env.FLUFFOS_EVAL_MAX_BYTES
+        else
+          process.env.FLUFFOS_EVAL_MAX_BYTES = saved
+      }
+    })
+
+    it("should reject an oversized eval payload before writing to disk", async() => {
+      const server = new FluffOSMCPServer()
+      server.evalMaxBytes = 16
+      await assert.rejects(
+        () => server.runLpcshell("x".repeat(17)),
+        /Eval payload too large/
+      )
+    })
   })
 
   describe("normalizePath", () => {
