@@ -22,8 +22,11 @@ This MCP server exposes FluffOS's powerful CLI utilities (`symbol` and `lpcc`) t
 - **`fluffos_validate`**: Validate an LPC file using FluffOS's `symbol` tool
 - **`fluffos_disassemble`**: Disassemble LPC to bytecode using `lpcc`
 - **`fluffos_doc_lookup`**: Search FluffOS documentation for efuns, applies, concepts, etc.
+- **`fluffos_eval`**: Evaluate LPC statements against the **live** driver using `lpcshell` (opt-in)
 
-All three tools are **read-only** and **idempotent** — they never modify files, drivers, or running MUDs, and are safe for agents to auto-invoke.
+`fluffos_validate`, `fluffos_disassemble`, and `fluffos_doc_lookup` are **read-only** and **idempotent** — they never modify files, drivers, or running MUDs, and are safe for agents to auto-invoke.
+
+`fluffos_eval` is **not** read-only: it boots the full runtime and **executes** the LPC you give it, so it can have side effects (writing files, mutating daemon/database state, firing events). It is registered only when `FLUFFOS_ENABLE_EVAL` is set, and should not be auto-invoked on untrusted input.
 
 ### When to use which tool
 
@@ -35,8 +38,10 @@ All three tools are **read-only** and **idempotent** — they never modify files
 | Look up an efun signature or apply semantics | `fluffos_doc_lookup` |
 | Find out if an efun exists in *this* driver build | `fluffos_validate` on a file that calls it |
 | Pre-commit / pre-deploy sanity check | `fluffos_validate` |
+| See the actual runtime value/behaviour of an expression | `fluffos_eval` |
+| Reproduce a runtime error interactively | `fluffos_eval` |
 
-`fluffos_doc_lookup` is only registered when the server is started with `FLUFFOS_DOCS_DIR` set.
+`fluffos_doc_lookup` is only registered when the server is started with `FLUFFOS_DOCS_DIR` set. `fluffos_eval` is only registered when `FLUFFOS_ENABLE_EVAL` is set.
 
 ## Prerequisites
 
@@ -46,6 +51,7 @@ You need FluffOS installed with the CLI tools available. The following binaries 
 
 - `symbol` - For validating LPC files
 - `lpcc` - For disassembling to bytecode
+- `lpcshell` - (Optional) For `fluffos_eval`; required only when `FLUFFOS_ENABLE_EVAL` is set
 
 ### 2. Node.js
 
@@ -75,9 +81,10 @@ npm install
 
 The server requires these environment variables:
 
-- `FLUFFOS_BIN_DIR` - Directory containing FluffOS binaries (`symbol`, `lpcc`)
+- `FLUFFOS_BIN_DIR` - Directory containing FluffOS binaries (`symbol`, `lpcc`, and optionally `lpcshell`)
 - `MUD_RUNTIME_CONFIG_FILE` - Path to your FluffOS config file (e.g., `/mud/lib/etc/config.test`)
 - `FLUFFOS_DOCS_DIR` - (Optional) Directory containing FluffOS documentation for doc lookup
+- `FLUFFOS_ENABLE_EVAL` - (Optional) Set to `true` (or `1`/`yes`/`on`, case-insensitive) to register `fluffos_eval`, which executes live LPC via `lpcshell`. Off by default — any other value, including `false`/`0` or leaving it unset, keeps the tool disabled because it is not read-only.
 
 ## Setup for Different AI Tools
 
@@ -165,6 +172,25 @@ Add to `~/Library/Application Support/Claude/claude_desktop_config.json` (macOS)
 
 Restart Claude Desktop after configuration.
 
+### Enabling live LPC eval (optional)
+
+The examples above register only the three read-only tools. To also expose
+`fluffos_eval` — which boots the driver and **executes** LPC, so it can have
+side effects — add `FLUFFOS_ENABLE_EVAL` to the `env` block alongside the
+others:
+
+```json
+"env": {
+  "FLUFFOS_BIN_DIR": "/path/to/fluffos/bin",
+  "MUD_RUNTIME_CONFIG_FILE": "/mud/lib/etc/config.test",
+  "FLUFFOS_ENABLE_EVAL": "true"
+}
+```
+
+Accepted "on" values are `true`, `1`, `yes`, or `on` (case-insensitive). Any
+other value — or omitting the variable entirely — leaves the tool disabled.
+The `lpcshell` binary must exist in `FLUFFOS_BIN_DIR` for this to work.
+
 ## Usage Examples
 
 Once configured, you can ask your AI assistant:
@@ -245,6 +271,13 @@ Example: `/mud/ox/lib/std/object.c` → `std/object.c`
 - Runs `scripts/search_docs.sh` helper script
 - Uses `grep` to search markdown files
 - Only available if `FLUFFOS_DOCS_DIR` is set
+
+**`fluffos_eval`** (optional):
+
+- Writes the submitted LPC statements to a temporary script file, then spawns `lpcshell <config> <tmpfile>`
+- The temp file is a plain OS file (read by `lpcshell` directly, not through the driver's file system) and so does **not** need to live inside the mudlib jail — only the LPC statements execute in-jail
+- Boots the full runtime and executes the code; captures stdout/stderr and exit code, then deletes the temp file
+- Only available if `FLUFFOS_ENABLE_EVAL` is set
 
 ### Error Handling
 
