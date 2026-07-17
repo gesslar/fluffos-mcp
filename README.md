@@ -85,6 +85,8 @@ The server requires these environment variables:
 - `MUD_RUNTIME_CONFIG_FILE` - Path to your FluffOS config file (e.g., `/mud/lib/etc/config.test`)
 - `FLUFFOS_DOCS_DIR` - (Optional) Directory containing FluffOS documentation for doc lookup
 - `FLUFFOS_ENABLE_EVAL` - (Optional) Set to `true` (or `1`/`yes`/`on`, case-insensitive) to register `fluffos_eval`, which executes live LPC via `lpcshell`. Off by default — any other value, including `false`/`0` or leaving it unset, keeps the tool disabled because it is not read-only.
+- `FLUFFOS_EVAL_TIMEOUT_MS` - (Optional) Wall-clock cap in milliseconds for a single `fluffos_eval` run before the `lpcshell` child is killed. Defaults to `30000` (30s); ignored unless `fluffos_eval` is enabled.
+- `FLUFFOS_EVAL_MAX_BYTES` - (Optional) Maximum size in bytes of an `fluffos_eval` `code` payload; larger requests are rejected before anything is written to disk. Defaults to `10485760` (10 MiB); ignored unless `fluffos_eval` is enabled.
 
 ## Setup for Different AI Tools
 
