@@ -103,6 +103,45 @@ describe("FluffOSMCPServer", () => {
       assert.ok(!docLookupCall, "fluffos_doc_lookup tool should not be registered")
     })
 
+    it("should register fluffos_eval tool when enableEval is set", () => {
+      const server = new FluffOSMCPServer()
+      server.enableEval = true
+      const registerMock = mock.method(server.server, "registerTool")
+
+      server.setupTools()
+
+      const calls = registerMock.mock.calls
+      const evalCall = calls.find(call => call.arguments[0] === "fluffos_eval")
+      assert.ok(evalCall, "fluffos_eval tool should be registered")
+    })
+
+    it("should not register fluffos_eval tool when enableEval is not set", () => {
+      const server = new FluffOSMCPServer()
+      server.enableEval = false
+      const registerMock = mock.method(server.server, "registerTool")
+
+      server.setupTools()
+
+      const calls = registerMock.mock.calls
+      const evalCall = calls.find(call => call.arguments[0] === "fluffos_eval")
+      assert.ok(!evalCall, "fluffos_eval tool should not be registered")
+    })
+
+    it("should mark fluffos_eval as not read-only and not idempotent", () => {
+      const server = new FluffOSMCPServer()
+      server.enableEval = true
+      const registerMock = mock.method(server.server, "registerTool")
+
+      server.setupTools()
+
+      const evalCall = registerMock.mock.calls.find(
+        call => call.arguments[0] === "fluffos_eval"
+      )
+      const {annotations} = evalCall.arguments[1]
+      assert.strictEqual(annotations.readOnlyHint, false)
+      assert.strictEqual(annotations.idempotentHint, false)
+    })
+
     it("should define validate tool with quality metadata", () => {
       const server = new FluffOSMCPServer()
       const registerMock = mock.method(server.server, "registerTool")

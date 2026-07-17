@@ -6,6 +6,10 @@ import * as z from "zod/v4"
 import {spawn} from "child_process"
 import {FileObject, DirectoryObject, Sass} from "@gesslar/toolkit"
 import url from "node:url"
+import {writeFile, unlink} from "node:fs/promises"
+import {tmpdir} from "node:os"
+import {join} from "node:path"
+import {randomUUID} from "node:crypto"
 
 export class FluffOSMCPServer {
   constructor() {
@@ -24,6 +28,14 @@ export class FluffOSMCPServer {
     this.binDir = process.env.FLUFFOS_BIN_DIR
     this.configFile = process.env.MUD_RUNTIME_CONFIG_FILE
     this.docsDir = process.env.FLUFFOS_DOCS_DIR
+    // Opt-in only: fluffos_eval executes live LPC against the mudlib (side
+    // effects possible), so the tool is registered only when this is set to
+    // an explicit affirmative. A plain truthiness check would treat "false"
+    // and "0" as enabled (any non-empty string is truthy in JS), so match a
+    // fixed set of yes-values case-insensitively instead.
+    this.enableEval = ["1", "true", "yes", "on"].includes(
+      (process.env.FLUFFOS_ENABLE_EVAL ?? "").trim().toLowerCase()
+    )
     this.mudlibDir = null
   }
 
@@ -49,6 +61,11 @@ export class FluffOSMCPServer {
       console.error(`FluffOS docs directory: ${this.docsDir}`)
     else
       console.error(`FluffOS docs directory: not set (doc lookup disabled)`)
+
+    if(this.enableEval)
+      console.error(`LPC eval (lpcshell): ENABLED — executes live LPC with possible side effects`)
+    else
+      console.error(`LPC eval (lpcshell): disabled (set FLUFFOS_ENABLE_EVAL to enable)`)
 
     this.setupTools()
   }
@@ -267,6 +284,69 @@ export class FluffOSMCPServer {
         }
       })
     }
+
+    // Register eval tool (conditional — executes live LPC, opt-in only)
+    if(this.enableEval) {
+      this.server.registerTool("fluffos_eval", {
+        title: "Evaluate LPC (lpcshell)",
+        description:
+          "Evaluate LPC statements against the **live** FluffOS driver using the `lpcshell` CLI in script mode. Unlike `fluffos_validate` and `fluffos_disassemble`, this **boots the full runtime** (master object, simul_efun, preloaded daemons) and **executes** the code you provide.\n\n" +
+          "**Use when:**\n" +
+          "- Checking the actual runtime value or behaviour of an expression (e.g. `sizeof(users())`, an efun's return, a mapping operation).\n" +
+          "- Reproducing a runtime error interactively without editing and reloading a mudlib file.\n" +
+          "- Probing driver state through efuns during debugging.\n\n" +
+          "**⚠️ Not read-only.** Statements run with full driver privileges and can have side effects — writing files, mutating daemon or database state, firing events. Do not use for untrusted code or as a routine auto-invoked check. Each statement is auto-printed like a REPL; a bare expression prints its value, a statement (assignment, loop, `if`) runs silently. Variable values persist across statements within a single call.\n\n" +
+          "**Do not use for:**\n" +
+          "- Compile-only validation — use `fluffos_validate` (faster, no side effects).\n" +
+          "- Bytecode inspection — use `fluffos_disassemble`.\n\n" +
+          "**Returns** the combined driver output (auto-printed results, `write()`/`printf()` output, and clang-style compile/runtime diagnostics) as text, plus a `structuredContent` payload with `success`, `exitCode`, and `output`. Exit code is nonzero if any statement failed to compile or errored. Only registered when the server was started with `FLUFFOS_ENABLE_EVAL` set.\n\n" +
+          "**Related tools:** `fluffos_validate` to compile without executing; `fluffos_doc_lookup` for efun/apply reference.",
+        inputSchema: {
+          code: z.string().describe(
+            "One or more LPC statements to evaluate, separated by newlines. A bare expression (e.g. `1 + 1` or `sizeof(users())`) is auto-printed; a statement (e.g. `int x = 5;`, `foreach(...) ...`) runs silently. Variable declarations persist across lines within this one call. Example: `object o = load_object(\"/std/object\");\\nvalues(o->query_stats());`"
+          ),
+        },
+        outputSchema: {
+          success: z.boolean().describe("True when every statement compiled and executed with exit code 0."),
+          exitCode: z.number().int().describe("Exit code from `lpcshell`. 0 indicates all statements succeeded; nonzero indicates a compile or runtime failure."),
+          output: z.string().describe("Combined stdout and stderr from the driver — auto-printed results, explicit output, and any diagnostics."),
+        },
+        annotations: {
+          title: "Evaluate LPC (lpcshell)",
+          readOnlyHint: false,
+          destructiveHint: true,
+          idempotentHint: false,
+          openWorldHint: true,
+        },
+      }, async({code}) => {
+        try {
+          const result = await this.runLpcshell(code)
+          const text = result.success
+            ? result.output
+            : `✗ Evaluation failed (exit code: ${result.exitCode})\n\n${result.output}`
+
+          return {
+            content: [
+              {
+                type: "text",
+                text,
+              },
+            ],
+            structuredContent: result,
+          }
+        } catch(error) {
+          return {
+            content: [
+              {
+                type: "text",
+                text: `Error: ${error.message}`,
+              },
+            ],
+            isError: true,
+          }
+        }
+      })
+    }
   }
 
   async runSymbol(lpcFile) {
@@ -341,6 +421,53 @@ export class FluffOSMCPServer {
         reject(new Error(`Failed to run lpcc: ${err.message}`))
       })
     })
+  }
+
+  async runLpcshell(code) {
+    // The script file is read by lpcshell via a plain OS-level open (not the
+    // driver's file system), so it does NOT need to live inside the mudlib
+    // jail — a temp file anywhere the process can read works. Only the LPC
+    // statements themselves execute inside the jail.
+    const scriptPath = join(tmpdir(), `fluffos-eval-${randomUUID()}.lpc`)
+    await writeFile(scriptPath, code.endsWith("\n") ? code : `${code}\n`)
+
+    try {
+      return await new Promise((resolve, reject) => {
+        const binDir = new DirectoryObject(this.binDir)
+        const lpcshellPath = binDir.getFile("lpcshell").path
+        const configFile = new FileObject(this.configFile)
+        const proc = spawn(lpcshellPath, [this.configFile, scriptPath], {
+          cwd: configFile.parentPath,
+        })
+
+        let stdout = ""
+        let stderr = ""
+
+        proc.stdout.on("data", data => {
+          stdout += data.toString()
+        })
+
+        proc.stderr.on("data", data => {
+          stderr += data.toString()
+        })
+
+        proc.on("close", code => {
+          const output = (stdout + stderr).trim()
+
+          resolve({
+            success: code === 0,
+            exitCode: code,
+            output,
+          })
+        })
+
+        proc.on("error", err => {
+          reject(new Error(`Failed to run lpcshell: ${err.message}`))
+        })
+      })
+    } finally {
+      await unlink(scriptPath).catch(() => {})
+    }
   }
 
   async searchDocs(query) {
