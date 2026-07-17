@@ -87,6 +87,7 @@ The server requires these environment variables:
 - `FLUFFOS_ENABLE_EVAL` - (Optional) Set to `true` (or `1`/`yes`/`on`, case-insensitive) to register `fluffos_eval`, which executes live LPC via `lpcshell`. Off by default — any other value, including `false`/`0` or leaving it unset, keeps the tool disabled because it is not read-only.
 - `FLUFFOS_EVAL_TIMEOUT_MS` - (Optional) Wall-clock cap in milliseconds for a single `fluffos_eval` run before the `lpcshell` child is killed. Defaults to `30000` (30s); ignored unless `fluffos_eval` is enabled.
 - `FLUFFOS_EVAL_MAX_BYTES` - (Optional) Maximum size in bytes of an `fluffos_eval` `code` payload; larger requests are rejected before anything is written to disk. Defaults to `10485760` (10 MiB); ignored unless `fluffos_eval` is enabled.
+- `FLUFFOS_EVAL_MAX_CONCURRENT` - (Optional) Maximum number of `fluffos_eval` runs allowed in flight at once; further requests are rejected until a slot frees. Each run spawns a full `lpcshell` driver boot, so this bounds both temp-storage use and driver load. Defaults to `4`; ignored unless `fluffos_eval` is enabled.
 
 ## Setup for Different AI Tools
 

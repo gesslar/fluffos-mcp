@@ -73,6 +73,35 @@ describe("FluffOSMCPServer", () => {
         /Eval payload too large/
       )
     })
+
+    it("should default evalMaxConcurrent to 4, honouring a valid override", () => {
+      const saved = process.env.FLUFFOS_EVAL_MAX_CONCURRENT
+      try {
+        delete process.env.FLUFFOS_EVAL_MAX_CONCURRENT
+        assert.strictEqual(new FluffOSMCPServer().evalMaxConcurrent, 4)
+
+        process.env.FLUFFOS_EVAL_MAX_CONCURRENT = "garbage"
+        assert.strictEqual(new FluffOSMCPServer().evalMaxConcurrent, 4)
+
+        process.env.FLUFFOS_EVAL_MAX_CONCURRENT = "8"
+        assert.strictEqual(new FluffOSMCPServer().evalMaxConcurrent, 8)
+      } finally {
+        if(saved === undefined)
+          delete process.env.FLUFFOS_EVAL_MAX_CONCURRENT
+        else
+          process.env.FLUFFOS_EVAL_MAX_CONCURRENT = saved
+      }
+    })
+
+    it("should reject an eval when the concurrency limit is reached", async() => {
+      const server = new FluffOSMCPServer()
+      server.evalMaxConcurrent = 2
+      server.evalInFlight = 2
+      await assert.rejects(
+        () => server.runLpcshell("1 + 1;"),
+        /Too many concurrent evaluations/
+      )
+    })
   })
 
   describe("normalizePath", () => {
