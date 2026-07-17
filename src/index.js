@@ -48,6 +48,14 @@ export class FluffOSMCPServer {
     this.evalMaxBytes = Number.isInteger(parsedMaxBytes) && parsedMaxBytes > 0
       ? parsedMaxBytes
       : 10 * 1024 * 1024
+    // Cap on simultaneous fluffos_eval runs (each spawns a full driver boot).
+    // Override with FLUFFOS_EVAL_MAX_CONCURRENT; falls back to 4 on unset/invalid.
+    const parsedConcurrent = Number.parseInt(process.env.FLUFFOS_EVAL_MAX_CONCURRENT ?? "", 10)
+    this.evalMaxConcurrent =
+      Number.isInteger(parsedConcurrent) && parsedConcurrent > 0
+        ? parsedConcurrent
+        : 4
+    this.evalInFlight = 0
     this.mudlibDir = null
   }
 
@@ -447,12 +455,26 @@ export class FluffOSMCPServer {
         `(set FLUFFOS_EVAL_MAX_BYTES to change it).`
       )
 
+    // Cap concurrent evals. Each run spawns a full lpcshell (which boots the
+    // entire driver) and writes its own temp script, so unbounded concurrency
+    // both piles up driver boots and lets many capped payloads collectively
+    // exhaust the temp filesystem before any cleanup runs. The check and
+    // increment are synchronous (no await between them), so no race.
+    if(this.evalInFlight >= this.evalMaxConcurrent)
+      throw new Error(
+        `Too many concurrent evaluations: ${this.evalInFlight} in flight, limit is ` +
+        `${this.evalMaxConcurrent} (set FLUFFOS_EVAL_MAX_CONCURRENT to change it).`
+      )
+
+    this.evalInFlight++
+
     const scriptPath = join(tmpdir(), `fluffos-eval-${randomUUID()}.lpc`)
-    // 0o600: the eval script may contain sensitive code, and tmpdir() is
-    // shared — keep it readable only by the user running the server.
-    await writeFile(scriptPath, code.endsWith("\n") ? code : `${code}\n`, {mode: 0o600})
 
     try {
+      // 0o600: the eval script may contain sensitive code, and tmpdir() is
+      // shared — keep it readable only by the user running the server.
+      await writeFile(scriptPath, code.endsWith("\n") ? code : `${code}\n`, {mode: 0o600})
+
       return await new Promise((resolve, reject) => {
         const binDir = new DirectoryObject(this.binDir)
         const lpcshellPath = binDir.getFile("lpcshell").path
@@ -508,6 +530,7 @@ export class FluffOSMCPServer {
         })
       })
     } finally {
+      this.evalInFlight--
       await unlink(scriptPath).catch(() => {})
     }
   }

@@ -33,6 +33,7 @@
   },
   "scripts": {
     "start": "node src/index.js",
+    "test": "node --test 'src/**/*.test.js'",
     "lint": "eslint src/",
     "lint:fix": "eslint src/ --fix",
     "submit": "npm publish --access public --//registry.npmjs.org/:_authToken=\"${NPM_ACCESS_TOKEN}\"",
