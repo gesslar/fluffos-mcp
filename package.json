@@ -44,7 +44,7 @@
     "major": "npm version major"
   },
   "dependencies": {
-    "@gesslar/toolkit": "^5.1.0",
+    "@gesslar/toolkit": "^6.0.3",
     "@modelcontextprotocol/sdk": "^1.29.0",
     "zod": "^4.3.6"
   },
